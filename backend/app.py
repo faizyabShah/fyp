@@ -53,8 +53,13 @@ def signup():
         # Insert the user into the database
         cursor.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?)', (email, hashed_password, name, coordinates, plots))
         conn.commit()
+        token = jwt.encode(
+                {'email': email, 'name': name , 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+                app.config['JWT_SECRET'],
+                algorithm='HS256'
+            )
 
-        return jsonify({'message': 'User created successfully'}), 201
+        return jsonify({'token': token}), 201
 
     except sqlite3.IntegrityError:
         return jsonify({'error': 'User with this email already exists'}), 400
@@ -83,13 +88,14 @@ def login():
 
     try:
         # Query the user by email
-        cursor.execute('SELECT password FROM users WHERE email=?', (email,))
+        cursor.execute('SELECT * FROM users WHERE email=?', (email,))
         user = cursor.fetchone()
+        print(user)
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[0]):
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[1]):
             # Create a JWT token
             token = jwt.encode(
-                {'email': email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+                {'email': user[0], 'name': user[2] , 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
                 app.config['JWT_SECRET'],
                 algorithm='HS256'
             )
