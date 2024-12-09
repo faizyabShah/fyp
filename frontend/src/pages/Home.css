@@ -1,0 +1,28 @@
+.home {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: calc(100vh);
+    color: white;
+}
+
+.home h1 {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+}   
+
+.home button {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    border: none;
+    background-color: rgb(30, 30, 30);
+    color: white;
+    cursor: pointer;
+    border-radius: 50px;
+    transition: background-color 0.3s;  
+}
+
+.home button:hover {
+    background-color: rgb(20, 20, 20);
+}
