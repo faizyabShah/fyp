@@ -16,6 +16,7 @@
     background-image: url('../media/card-background3.jpg');
     background-size: cover;
     backdrop-filter: blur(5px);
+    z-index: -1;
 }
 
 .cardd h2 {

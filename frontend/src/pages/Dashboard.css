@@ -1,7 +1,11 @@
 /*  write styles for class dashboard, with class fields and stuff */
 
 .dashboard {
-padding: 5rem;
+padding-top: 2rem;
+padding-right: 5rem;
+padding-left: 2rem;
+
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13,6 +17,7 @@ padding: 5rem;
 .remaining {
     margin-top: 2rem;
     display: flex;
+    gap: 2rem;
     justify-content: space-around;
     align-items: center;
 }
@@ -117,18 +122,6 @@ input:checked + .slider:before {
     width: 50%;
 }
 
-.legend {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    margin-right: 10px;
-    margin-bottom: 10px;
-}
 
 .stage {
     width: 20px;
@@ -176,4 +169,37 @@ input:checked + .slider:before {
     gap: 1rem;
     width: 50%;
     background-color: black;
+}
+
+.chat-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: background-color 0.3s;
+}
+
+.chat-button:hover {
+    background-color: #0056b3;
+}
+
+
+.fieldinfodiv {
+    width: 50%;
+}
+
+.fieldactionsdiv {
+    width: 50%;
 }

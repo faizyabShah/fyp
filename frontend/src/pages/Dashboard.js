@@ -1,18 +1,17 @@
-// create a dashboard that has a navbar with attribute fixed set to be true, it should display a field image in the center, on the right should be the number of plots, and below should be a button to get analytics
-import React from 'react';
+import React, { useState } from 'react';
 import './Dashboard.css';
 import Navbar from '../components/Navbar';
-import field from '../media/field.png';
+import ChatWindow from '../components/ChatWindow';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/Authcontext';
-import { useState } from 'react';
-import masked from '../media/field_masked.png'
-import TextDisplay from '../components/TextDisplay';
+import FieldInfo from '../components/FieldInfo';
+import FieldActions from '../components/FieldActions';
 
 const Dashboard = () => {
-    const { isAuthenticated, logout, token } = useAuth();
-    const [suggestion, setSuggestion] = useState('');
+    const { isAuthenticated, token } = useAuth();
     const [isToggled, setIsToggled] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false); // State for chat window visibility
+    const [chatMessages, setChatMessages] = useState([]); // State for chat messages
     const navigate = useNavigate();
 
     if (!isAuthenticated || token == null) {
@@ -20,20 +19,15 @@ const Dashboard = () => {
         return null;
     }
 
-    // decode current token
+    
     const payload = token.split('.')[1];
     const data = JSON.parse(atob(payload));
-    console.log(data);
-    // convert data.coordinates into an array
-
-
 
     const handleToggle = () => {
-        setIsToggled(!isToggled); // Toggle the state
+        setIsToggled(!isToggled);
     };
 
-    const handleAI = async () => {
-        // send request to backend for ai suggestions
+    const fetchAIResponse = async () => {
         try {
             const response = await fetch('http://localhost:5000/generate', {
                 method: 'POST',
@@ -41,92 +35,55 @@ const Dashboard = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ text: "My wheat crop is currently in germination and tillering stage. Tell me what should be done in these stages for spring wheat for better crop health and more yeild. Also tell me what are some of the dangers (IF THERE ARE ANY) in this stage of the crop and what I should do about it? Give a very brief and precise answer that a farmer should understand." }),
+                body: JSON.stringify({
+                    text: "My wheat crop is currently in germination and tillering stage. Tell me what should be done in these stages for spring wheat for better crop health and more yield. Also tell me what are some of the dangers (IF THERE ARE ANY) in this stage of the crop and what I should do about it? Give a very brief and precise answer that a farmer should understand."
+                }),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                setSuggestion(data.response);
+                setChatMessages((prevMessages) => [
+                    ...prevMessages,
+                    { sender: 'AI', text: data.response },
+                ]);
             } else {
-                const errorData = await response.json();
-                console.error('AI failed:', errorData);
+                console.error('Failed to fetch AI response');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error fetching AI response:', error);
         }
+    };
 
-
-    }
+    const toggleChatWindow = () => {
+        setIsChatOpen(!isChatOpen); // Toggle chat window visibility
+    };
 
     return (
         <>
-        <Navbar fixed={false} dashboard={true} token = {data}/>        
-        <div className="dashboard" id="Dashboard">
-            <h1>Your Field</h1>
-            <div className='remaining'>
-                <img src={ isToggled ? masked : field} alt="field" className="field"></img>
-                <div className="metadata">
-                <div className="legend">
-                        <div className="legend-item">
-                            <div className="stage pre-germination"></div>
-                            <span>Pre-germination</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage germination"></div>
-                            <span>Germination</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage tillering"></div>
-                            <span>Tillering</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage stem-elongation"></div>
-                            <span>Stem Elongation</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage heading"></div>
-                            <span>Heading</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage flowering"></div>
-                            <span>Flowering</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage filling"></div>
-                            <span>Filling</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="stage maturity"></div>
-                            <span>Maturity</span>
-                        </div>
-                    </div>
-                <div className="toggle">
-                        {/* Toggle Switch */}
-                        <label>Mask</label>
-                        <label className="switch">
-                            <input 
-                                type="checkbox" 
-                                checked={isToggled} 
-                                onChange={handleToggle}
-                            />
-                            <span className="slider round"></span>
-                        </label>
-                    </div>
-                    <div className="plots">
-                        <h2>Number of Plots</h2>
-                        <p>{ data.plots }</p>
-                    </div>
-            <button className="analytics" onClick={handleAI}>Get AI Suggestions</button>
-            <div className="suggestion">
-                    <TextDisplay text={suggestion} />
-                    </div>
-
+            <Navbar fixed={false} dashboard={true} token={data} />
+            <div className="dashboard" id="Dashboard">
+                <div className="remaining">
+                    <FieldInfo className="fieldinfodiv" data={data} toggle={isToggled} handleToggle={handleToggle}/>
+                    <FieldActions className="fieldactionsdiv" fetchAIResponse={fetchAIResponse} />
                 </div>
-                
             </div>
-        </div>
+            <button className="chat-button" onClick={toggleChatWindow}>
+                💬 Chat
+            </button>
+            {isChatOpen && (
+                <ChatWindow
+                    messages={chatMessages}
+                    onClose={toggleChatWindow}
+                    onSendMessage={(message) =>
+                        setChatMessages((prevMessages) => [
+                            ...prevMessages,
+                            { sender: 'User', text: message },
+                        ])
+                    }
+                />
+            )}
         </>
     );
-}
+};
 
 export default Dashboard;

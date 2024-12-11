@@ -1,0 +1,48 @@
+.field-actions {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center buttons horizontally */
+    gap: 15px; /* Space between buttons */
+    margin: 20px 0;
+  }
+  
+  .action-button {
+    width: 200px;
+    height: 200px;
+    background-color: #007bff; /* Primary color */
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px; /* Slight rounding for square look */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+  }
+  
+  .action-button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+    transform: scale(1.05); /* Slight zoom effect */
+  }
+  
+  .ai-suggestions-button {
+    width: 220px;
+    height: 60px;
+    background: linear-gradient(45deg, #6a11cb, #2575fc); /* Gradient background */
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px; /* Fully rounded corners */
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .ai-suggestions-button:hover {
+    transform: scale(1.1); /* Slightly larger on hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Add shadow effect */
+  }
+  

@@ -1,0 +1,27 @@
+.fieldinfo {
+    display: flex;
+    flex-direction: column;
+    padding-left: 2rem;
+    padding-top: 2rem;
+    gap: 2rem;
+}
+
+.fieldinfo>h1 {
+    align-self: center;
+}
+
+.fieldmask {
+    display: flex;
+    gap: 1rem;
+}
+
+.field {
+    width: 10px;
+}
+
+.fieldinfo {
+    border-radius: 2%;
+    margin: 0 1rem;
+    padding: 1rem 5rem;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}

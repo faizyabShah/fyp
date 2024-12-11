@@ -1,46 +1,57 @@
-// create a navbar component and its styles
 import React from 'react';
 import './Navbar.css';
 import image from '../media/wheat-plant.png';
-import { Link } from 'react-scroll';
+import { Link as ScrollLink } from 'react-scroll';  // Rename to avoid confusion
+import { Link as RouterLink } from 'react-router-dom';  // Import React Router Link
 
-
-const Navbar = ( { fixed, dashboard, token} ) => {
+const Navbar = ({ fixed, dashboard, token }) => {
     return (
-        <nav className={`navbar navbar-expand-lg navbar-light bg-light ${fixed ? " mynavbar" : " notmynavbar"}`}>
-        <a className="navbar-brand" href="#"> <img className= "logo" src={image}></img><span>WheatInsight</span></a>
-        <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav">
-            <li className="nav-item active">
-                <Link to={dashboard ? "/" : "Home"} smooth={true} duration={500} className="nav-link">
-                Home
-                </Link>
-            </li>
-            { !dashboard ?
-            (<><li className="nav-item">
-                            <Link to="services" smooth={true} duration={500} className="nav-link">
-                                Services
-                            </Link>
-                        </li><li className="nav-item">
-                                <Link to="login" smooth={true} duration={500} className="nav-link">
-                                    Log in
-                                </Link>
-                            </li></>) :
-            (<>
-                <li className="nav-item">
-                                <Link to="/dashboard" smooth={true} duration={500} className="nav-link">
-                                    {token.name}
-                                </Link>
+        <nav className={`navbar navbar-expand-lg navbar-light bg-light ${fixed ? "mynavbar" : "notmynavbar"}`}>
+            <RouterLink to="/" className="navbar-brand">
+
+                <img className="logo" src={image} alt="Wheat plant logo" />
+                <span className='logo-text'>WheatInsight</span>
+            </RouterLink>
+            <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span className="navbar-toggler-icon"></span>
+            </button>
+            <div className="collapse navbar-collapse" id="navbarNav">
+                <ul className="navbar-nav">
+                    <li className="nav-item active">
+                        {dashboard ? (
+                            <RouterLink to="/" className="nav-link">
+                                Home
+                            </RouterLink>
+                        ) : (
+                            <ScrollLink to="Home" smooth={true} duration={500} className="nav-link">
+                                Home
+                            </ScrollLink>
+                        )}
+                    </li>
+                    {!dashboard ? (
+                        <>
+                            <li className="nav-item">
+                                <ScrollLink to="services" smooth={true} duration={500} className="nav-link">
+                                    Services
+                                </ScrollLink>
                             </li>
-            </>)
-            }
-            </ul>
-        </div>
+                            <li className="nav-item">
+                                <ScrollLink to="login" smooth={true} duration={500} className="nav-link">
+                                    Log in
+                                </ScrollLink>
+                            </li>
+                        </>
+                    ) : (
+                        <li className="nav-item username">
+                            <RouterLink to="/dashboard" className="nav-link">
+                                {token.name}
+                            </RouterLink>
+                        </li>
+                    )}
+                </ul>
+            </div>
         </nav>
     );
-    }
+};
 
 export default Navbar;
