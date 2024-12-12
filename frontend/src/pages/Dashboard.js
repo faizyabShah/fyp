@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import './Dashboard.css';
+import '../styles/Dashboard.css';
 import Navbar from '../components/Navbar';
-import ChatWindow from '../components/ChatWindow';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/Authcontext';
 import FieldInfo from '../components/FieldInfo';
-import FieldActions from '../components/FieldActions';
+import Chatbot from '../components/Chatbot';
+import WeatherWidget from '../components/WeatherWidget';
 
 const Dashboard = () => {
     const { isAuthenticated, token } = useAuth();
     const [isToggled, setIsToggled] = useState(false);
-    const [isChatOpen, setIsChatOpen] = useState(false); // State for chat window visibility
-    const [chatMessages, setChatMessages] = useState([]); // State for chat messages
     const navigate = useNavigate();
 
     if (!isAuthenticated || token == null) {
@@ -42,10 +40,6 @@ const Dashboard = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                setChatMessages((prevMessages) => [
-                    ...prevMessages,
-                    { sender: 'AI', text: data.response },
-                ]);
             } else {
                 console.error('Failed to fetch AI response');
             }
@@ -54,34 +48,26 @@ const Dashboard = () => {
         }
     };
 
-    const toggleChatWindow = () => {
-        setIsChatOpen(!isChatOpen); // Toggle chat window visibility
-    };
 
     return (
         <>
+            <Chatbot />
             <Navbar fixed={false} dashboard={true} token={data} />
-            <div className="dashboard" id="Dashboard">
-                <div className="remaining">
-                    <FieldInfo className="fieldinfodiv" data={data} toggle={isToggled} handleToggle={handleToggle}/>
-                    <FieldActions className="fieldactionsdiv" fetchAIResponse={fetchAIResponse} />
+            <div className="dashboards" id="Dashboard">
+                {/* <div className="remaining"> */}
+                    {/* <FieldInfo className="fieldinfodiv" data={data} toggle={isToggled} handleToggle={handleToggle}/> */}
+                {/* </div> */}
+
+                <div className="row p-5">
+                    <div className="col-md-9">
+
+                    </div>
+                    <div className="col-md-3">
+                    <WeatherWidget />
+                    </div>
                 </div>
             </div>
-            <button className="chat-button" onClick={toggleChatWindow}>
-                💬 Chat
-            </button>
-            {isChatOpen && (
-                <ChatWindow
-                    messages={chatMessages}
-                    onClose={toggleChatWindow}
-                    onSendMessage={(message) =>
-                        setChatMessages((prevMessages) => [
-                            ...prevMessages,
-                            { sender: 'User', text: message },
-                        ])
-                    }
-                />
-            )}
+
         </>
     );
 };

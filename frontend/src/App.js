@@ -8,6 +8,8 @@ import Homepage from './pages/Homepage';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import { AuthProvider } from './contexts/Authcontext';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap.css';
 
 
 

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import './Signup.css';
-import Card from '../components/Card';
-import agri from '../media/agri.jpg';
+import '../styles/Signup.css';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/Authcontext';

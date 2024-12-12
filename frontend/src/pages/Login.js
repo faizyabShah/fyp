@@ -1,8 +1,7 @@
 // create login page with clases login, login-container
 
 import React from 'react';
-import './Login.css';
-import agri from '../media/agri.jpg';
+import '../styles/Login.css';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +49,7 @@ const Login = () => {
     return (
         <div className="login" id="Login">
             <div className="agriimage">
-                <img src={agri} alt="agri"></img>
+                <img src={'./media/agri.jpg'} alt="agri"></img>
             </div>
             <div className="login-container">
                 <h1>Log in</h1>

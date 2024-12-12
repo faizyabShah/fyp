@@ -1,7 +1,7 @@
 // create a page that uses cards to show our services offered, that includes a title and a description, the services are phenological stage estimation, yeild estimation, and actionable recommendations
 
 import React from 'react';
-import './Services.css';
+import '../styles/Services.css';
 import Card from '../components/Card';
 
 

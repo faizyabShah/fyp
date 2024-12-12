@@ -127,10 +127,10 @@ def login():
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()
-    if not data or 'text' not in data:
+    if not data or 'query' not in data or 'prompt' not in data:
         return jsonify({'error': 'Missing text'}), 400
-
-    text = data['text']
+    text = data['query']
+    prompt = data['prompt']
 
     client = Groq(
         api_key="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",
@@ -141,11 +141,14 @@ def generate():
             {
                 "role": "user",
                 "content": text,
+            },
+            {
+                "role": "system",
+                "content": prompt,
             }
         ],
         model="llama3-8b-8192",
     )
-
     return jsonify({'response': chat_completion.choices[0].message.content}), 200
 
 

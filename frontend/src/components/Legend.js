@@ -1,4 +1,4 @@
-import './Legend.css';
+import '../styles/Legend.css';
 
 
 

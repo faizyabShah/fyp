@@ -1,15 +1,14 @@
 import React from 'react';
-import './Navbar.css';
-import image from '../media/wheat-plant.png';
+import '../styles/Navbar.css';
 import { Link as ScrollLink } from 'react-scroll';  // Rename to avoid confusion
 import { Link as RouterLink } from 'react-router-dom';  // Import React Router Link
 
 const Navbar = ({ fixed, dashboard, token }) => {
     return (
-        <nav className={`navbar navbar-expand-lg navbar-light bg-light ${fixed ? "mynavbar" : "notmynavbar"}`}>
+        <nav className={`navbar navbar-expand-lg  ${fixed ? "mynavbar" : "notmynavbar"}`}>
             <RouterLink to="/" className="navbar-brand">
 
-                <img className="logo" src={image} alt="Wheat plant logo" />
+                <img className="logo" src={'./media/wheat-plant.png'} alt="Wheat plant logo" />
                 <span className='logo-text'>WheatInsight</span>
             </RouterLink>
             <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
