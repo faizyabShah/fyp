@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar';
 
 // create a home component that has the text Take care of your crops from home with a button that says Get Started
 import React from 'react';
-import './Home.css';
+import '../styles/Home.css';
 
 const Homepage = () => {
     return (

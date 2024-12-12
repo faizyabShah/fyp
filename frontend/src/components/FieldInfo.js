@@ -1,7 +1,5 @@
 import Legend from './Legend';
-import field from '../media/field.jpg';
-import masked from '../media/field_masked.jpg';
-import './FieldInfo.css';
+import '../styles/FieldInfo.css';
 
 const legend = [
     {
@@ -44,7 +42,7 @@ function FieldInfo( {data, toggle, handleToggle} ) {
         <div className='fieldinfo'>
                 <h1>Your Field</h1>
                 <div className='fieldmask'>
-                    <img src={toggle ? masked : field} alt="field" className="field" />
+                    <img src={toggle ? './media/field_masked.jpg' : './media/field.jpg'} alt="field" className="field" />
                         <Legend legend={legend} />
                 </div>
                 <div className="metadata"> 

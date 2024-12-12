@@ -1,7 +1,7 @@
 // create a card component that takes title and description
 
 import React from 'react';
-import './Card.css';
+import '../styles/Card.css';
 
 const Card = ({title, description}) => {
     return (
