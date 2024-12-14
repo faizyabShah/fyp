@@ -1,0 +1,8 @@
+.map-container-ro{
+    height:40vh;
+    border: 3px solid #ccc;
+    overflow: hidden;
+    object-fit: contain;
+    border-radius: 15px;
+    margin: 15px 0;
+}

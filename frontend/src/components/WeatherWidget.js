@@ -52,29 +52,30 @@ const WeatherWidget = () => {
   const isDaytime = (time) => {
     const hours = time.getHours();
     return hours >= 6 && hours < 18; // Daytime is between 6:00 AM and 6:00 PM
-};
+  };
 
 
   return (
-    <div className={`weather-main ${isDaytime(localTime) ? "" : "night"}`}>
-    <h1 className="temperature">{temperature}°</h1>
-    <p className="city">{city}</p>
-    <p className="time">
-        {localTime.toLocaleTimeString("en-US", {
+    <div className="p-1">
+      <div className={`weather-main  ${isDaytime(localTime) ? "" : "night"}`}>
+        <h1 className="temperature">{temperature}°</h1>
+        <p className="city">{city}</p>
+        <p className="time">
+          {localTime.toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit",
-        })}
-    </p>
-    {isDaytime(localTime) ? (
-        <div className="sun"></div>
-    ) : (
-        <div className="moon">
+          })}
+        </p>
+        {isDaytime(localTime) ? (
+          <div className="sun"></div>
+        ) : (
+          <div className="moon">
             <div className="moon-internal"></div>
-        </div>
-    )}
-</div>
-
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

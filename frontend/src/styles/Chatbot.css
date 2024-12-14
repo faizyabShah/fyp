@@ -41,7 +41,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    background-color: green;
+    background-color: var(--secondary);
     color: white;
     border-radius: 8px 8px 0 0;
 }
@@ -74,7 +74,7 @@
 }
 
 .chatbot-user-msg{
-    background-color: green;
+    background-color: var(--main);
     border-radius: 20px;
     display: inline;
     color: white;

@@ -166,13 +166,13 @@ const Chatbot = () => {
                     <div className="d-flex justify-content-center mb-3">
                         <input
                             type="text"
-                            className="form-control"
+                            className="form-control mx-2"
                             id="chatbot-text"
                             placeholder="Type a Message..."
                             required
                         />
-                        <button className="btn btn-success or-width mx-3" id="chatbot-send-btn">
-                            Send
+                        <button className="primary-btn mx-3" id="chatbot-send-btn">
+                        ➤
                         </button>
                     </div>
                 </div>
