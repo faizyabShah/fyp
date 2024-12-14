@@ -2,13 +2,20 @@
     box-shadow: 0px 0px 15px #ccc;
     padding: 30px;
     width: 100%;
-    height: 100%;
+    height: 90%;
     border-radius: 20px;
     position: relative;
 }
 .night{
-    background-color: rgb(3, 1, 34);
+    background-color: var(--secondary);
     color: white;
+    transition: all .3s ease-in-out;
+}
+.night:hover{
+    background-color: var(--main);
+    .moon-internal{
+        background-color: var(--main);
+    }
 }
 .temperature{
     font-size: 5vw;
@@ -45,10 +52,27 @@
 
 .moon-internal{
     position: absolute;
-    top:-2%;
-    right: 10%;
-    background-color: rgb(3, 1 ,34);
+    top:-3%;
+    right: -4%;
+    background-color: var(--secondary);
     width: 2.8vw;
     height: 2.8vw;
     border-radius: 100%;
+    transition: all .3s ease-in-out;
+}
+
+@media (max-width: 768px) {
+    .temperature{
+        font-size: 20vw;
+    }
+    .moon{
+        width: 7vw;
+        height: 7vw;
+    }
+    .moon-internal{
+        width: 6.4vw;
+        height: 6.4vw;
+        top:0%;
+        right:12%;
+    }
 }

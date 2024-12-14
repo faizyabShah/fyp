@@ -203,3 +203,40 @@ input:checked + .slider:before {
 .fieldactionsdiv {
     width: 50%;
 }
+
+
+.welcome-heading{
+    line-height: 70%;
+}
+
+.profile-img{
+    width: 80px;
+}
+
+.profile{
+    padding: 10px;
+}
+
+.text-grey{
+    color: #7a7a7a;
+}
+
+.profile-para{
+    font-size: 20px;
+}
+.no-field{
+    min-height: 40vh;
+    text-align: center;
+}
+
+.pad-5{
+    padding: 80px;
+}
+@media (max-width: 768px) {
+    .pad-5{
+        padding: 20px;
+    }
+    .welcome-heading{
+        line-height: 120%;
+    }
+}
