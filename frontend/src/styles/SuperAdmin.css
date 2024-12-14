@@ -1,0 +1,45 @@
+.left-card, .right-card {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    margin: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 3rem;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    min-height: 60vh;
+    background-color: #f6f2fa;
+}
+
+.left-card .card-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #000;
+    text-align: center;
+    margin: 1rem;
+}
+
+.right-card {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    margin: 2rem;
+}
+
+.superadmin{
+    margin-top: 4rem;
+}
+
+
+.request-button {
+    background-color: #282729;
+    border: none;
+    border-radius: 2rem;
+    padding: 1rem 2rem;
+}
+
+.request-button:hover {
+    background-color: black;
+    color: white;
+    transition: 0.5s;
+}
