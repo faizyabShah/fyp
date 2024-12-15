@@ -6,12 +6,14 @@ const PhenologyData = (selectedField) => {
     
     const [cropName , setCropName] = useState("Wheat 2024");
     const [acres, setAcres] = useState(0);
+    const [scheduled, setScheduled] = useState(0);
     const [phenStage, setPhenStage] = useState(null);
 
     useEffect(() => {
         setCropName('ABC');
         setAcres(100);
         setPhenStage('Seedling');
+        setScheduled(0);
     }, [selectedField]);
 
     return (
@@ -23,14 +25,16 @@ const PhenologyData = (selectedField) => {
                     <h2 className="px-3">{phenStage}</h2>
                 </div>
                 <div className="d-flex justify-content-center">
-                    <h5 className="text-end fw-normal w-25"><i>Crop Name</i></h5>
-                    <div className="w-25"></div>
-                    <h5 className="text-start fw-bold text-success w-25">{cropName}</h5>
+                    <h5 className="text-end fw-normal w-50"><i>Crop Name</i></h5>
+                    <h5 className="text-start fw-bold text-success px-4 w-50">{cropName}</h5>
                 </div>
                 <div className="d-flex justify-content-center">
-                    <h5 className="text-end fw-normal w-25"><i>No. of Acres</i></h5>
-                    <div className="w-25"></div>
-                    <h5 className="text-start text-success fw-bold w-25">{acres}</h5>
+                    <h5 className="text-end fw-normal w-50"><i>No. of Acres</i></h5>
+                    <h5 className="text-start text-success px-4 fw-bold w-50">{acres}</h5>
+                </div>
+                <div className="d-flex justify-content-center">
+                    <h5 className="text-end fw-normal w-50"><i>Flight Status</i></h5>
+                    <h5 className="text-start  px-4 w-50"><span className="status-btn">{scheduled ? 'Scheduled' : 'On Request'}</span></h5>
                 </div>
             </div>
         </>

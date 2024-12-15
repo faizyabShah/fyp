@@ -240,3 +240,74 @@ input:checked + .slider:before {
         line-height: 120%;
     }
 }
+
+.pred-img-container{
+    height: 70vh;
+    width: auto;
+    object-fit: contain;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+.pred-img{
+    width: 100%;
+    object-fit: cover;
+    height: auto;
+}
+
+.gradient{
+    width: 100%;
+    margin-top: 10px;
+    height: 300px;
+    border-radius: 10px;
+    font-size: 2.3vw;
+    padding: 0 30px;
+    line-height: 90%;
+    font-weight: 500;
+    color: white ;
+    text-shadow: 0px 1px 4px rgba(38, 38, 38, 0.755);
+    border:none;
+    transition: all .4s ease-in-out;
+}
+.g1, .g2, .g3 {
+    position: relative; /* Enable positioning for z-index control */
+    overflow: hidden; /* Prevent pseudo-element from overflowing */
+    color: white; /* Ensure text color contrasts with the background */
+    background: linear-gradient(45deg, #9900b4, #6600b4, #007bff, rgb(97, 226, 255));
+    transition: all 0.4s ease-in-out;
+    text-align: center; /* Center text (optional) */
+    z-index: 2;
+}
+.g2{
+    background: linear-gradient(0deg, #7b4800, #ccb700, #7b4800);
+}
+.g3{
+    background: linear-gradient(135deg, #00b48d, #005f11);
+}
+.g1::before, .g2::before, .g3::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #9900b4, #6600b4, #007bff, rgb(97, 226, 255));
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    z-index: 0; /* Place behind the text */
+}
+.g2::before{
+    background: linear-gradient(90deg, #7b4800, #ccb700, #7b4800);
+}
+.g3::before{
+    background: linear-gradient(135deg, #29f2c6, #00b48d, #005f11, #002507)
+}
+
+.g1:hover::before, .g2:hover::before, .g3:hover::before {
+    opacity: 1;
+}
+
+.g1 > *, .g2 > *, .g3 > * {
+    position: relative; /* Ensure text stays above the pseudo-element */
+    z-index: 1;
+}

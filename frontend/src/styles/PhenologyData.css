@@ -3,3 +3,13 @@
     height: 4vw;
     margin: 0 10px;
 }
+
+.status-btn{
+    background-color: #e3e3e3;
+    color: #6e6e6e;
+    width: fit-content;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: 300;    
+    font-size: medium;
+}

@@ -3,7 +3,7 @@ import '../styles/Legend.css';
 
 
 
-function Legend ({legend}) {
+const Legend =  ({legend}) => {
   return (
     <div className="legend">
      {legend.map((item, index) => (

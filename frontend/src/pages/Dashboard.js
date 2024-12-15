@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/Dashboard.css';
 import '../App.css';
+import { IoIosRefresh } from "react-icons/io";
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/Authcontext';
@@ -8,14 +9,25 @@ import Chatbot from '../components/Chatbot';
 import WeatherWidget from '../components/WeatherWidget';
 import FieldDisplay from '../components/FieldDisplay';
 import PhenologyData from '../components/PhenologyData';
+import FieldInfo from '../components/FieldInfo';
+import Legend from '../components/Legend';
+import ReadOnlyMap from '../components/ReadOnlyMap';
 
 const Dashboard = () => {
     const { isAuthenticated, token } = useAuth();
     const [isToggled, setIsToggled] = useState(false);
     const [userFieldData, setUserFieldData] = useState(null);
+    const [fieldImg, setFeildImg] = useState('./media/field.jpg');
     const [selectedField, setSelectedField] = useState('Field 1');
     const [userName, setUserName] = useState("Faizyab Ali Shah");
     const navigate = useNavigate();
+
+    const legend = [
+        {color:'red', text:"LEGEND 1" },
+        {color:'blue', text:"LEGEND 2" },
+        {color:'yellow', text:"LEGEND 3" },
+        {color:'green', text:"LEGEND 4" },
+    ];
 
     useEffect (() => {
         setUserFieldData(
@@ -23,6 +35,10 @@ const Dashboard = () => {
             // []
         );
     }, []);
+
+    const getPredictions = (flag) => {
+        flag == 0 ? setFeildImg('./media/field_masked.jpg') : setFeildImg('./media/field.jpg')
+    }
 
 
     if (!isAuthenticated || token == null) {
@@ -103,6 +119,40 @@ const Dashboard = () => {
                                 <PhenologyData selectedField={selectedField}/>
                             </div>
                         </div>
+
+                        <div className="col-md-12 p-3">
+                            <div className="box-cont">
+                                <div className="row">
+                                    <div className="col-md-9">
+                                        <div className="pred-img-container">
+                                            <img src={fieldImg} className='img-fluid pred-img'/>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <Legend legend={legend} />
+                                    </div>
+                                </div>
+                                <div className="text-center py-4 my-2">
+                                    <button onClick={() => getPredictions(0)} className='primary-btn mx-1'>Get Live Predictions</button>
+                                    <button onClick={() => getPredictions(1)} className='primary-btn mx-1'><IoIosRefresh  style={{margin:"-10px"}}/></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-md-12 p-3">
+                            <div className="box-cont row">
+                                <div className="col-md-4">
+                                    <button className='gradient g1'><span>Get AI Recommendations</span></button>
+                                </div>
+                                <div className="col-md-4">
+                                    <button className='gradient g2'><span>Add New Field</span></button>
+                                </div>
+                                <div className="col-md-4">
+                                    <button className='gradient g3'><span>Generate Report</span></button>
+                                </div>
+                            </div>
+                        </div>
+
                         </>
                     }
                 </div>

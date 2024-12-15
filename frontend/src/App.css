@@ -1,6 +1,6 @@
 :root{
-  --main : #352a0e;
-  --secondary : #221a01;
+  --main : #42330c;
+  --secondary : #362901;
 }
 * {
     max-width: 100vw !important;
@@ -26,7 +26,7 @@ body {
 
 .box-cont{
   border-radius: 20px;
-  min-height: 20vh;
+  min-height: 55vh;
   padding: 20px;
   background-color: #eeeeee8b;
 }
