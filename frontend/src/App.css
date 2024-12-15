@@ -1,6 +1,6 @@
 :root{
-  --main : #003899;
-  --secondary : #030360;
+  --main : #352a0e;
+  --secondary : #221a01;
 }
 * {
     max-width: 100vw !important;
@@ -38,9 +38,19 @@ body {
   color: white!important;
   padding: 10px 40px;
   border: none;
+  width: fit-content;
   transition: all 0.3s ease-in-out;
 }
 
 .primary-btn:hover{
   background-color: var(--secondary)!important;
+}
+
+.img-fluid{
+  width: 100%;
+  height: 100%;
+}
+
+.head-highlight{
+  color: var(--main);
 }

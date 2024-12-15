@@ -1,10 +1,12 @@
 .home {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
     height: calc(100vh);
     color: white;
+    
+    /*make sure the width spans othe whole vw*/
+    background-image: url('../../public/media/bg1.png');
+    background-size: 100vw 100vh; 
+    background-repeat: no-repeat;
+    overflow-x: hidden;
 }
 
 .home h1 {
@@ -25,4 +27,20 @@
 
 .home button:hover {
     background-color: rgb(20, 20, 20);
+}
+
+.heading-home{
+    color:white;
+    text-shadow: 0px 2px 4px black;
+    letter-spacing: -4px;
+    padding: 0;
+    margin: 0;
+    height: 6%;
+}
+
+.heading-para{
+
+    text-shadow: 0px 1px 4px black;
+    line-height: -60px;
+    font-size: 30px;
 }

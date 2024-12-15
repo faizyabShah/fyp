@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/Dashboard.css';
+import '../App.css';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/Authcontext';
@@ -64,7 +65,7 @@ const Dashboard = () => {
         <>
             <Chatbot />
             <Navbar fixed={false} dashboard={true} token={data} />
-            <div className="dashboards" id="Dashboard">
+            <div className="dashboards pt-5" id="Dashboard">
 
                 <div className="row pad-5">
                     <div className="col-md-9">
@@ -85,7 +86,7 @@ const Dashboard = () => {
                         <WeatherWidget />
                     </div>
                     {
-                        userFieldData.length == 0 ?
+                        userFieldData == null?
                         <div className="col-md-12 p-3">
                             <div className="no-field box-cont d-flex justify-content-center flex-column align-items-center">
                                 <h3 className='text-grey'>You don't have any fields yet</h3>
@@ -98,7 +99,7 @@ const Dashboard = () => {
                             <FieldDisplay fieldInfo={userFieldData} selectedField={selectedField} setSelectedField={setSelectedField}/>
                         </div>
                         <div className="col-md-5 p-3">
-                            <div className=" box-cont">
+                            <div className="box-cont">
                                 <PhenologyData selectedField={selectedField}/>
                             </div>
                         </div>
