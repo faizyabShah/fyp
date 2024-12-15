@@ -169,3 +169,9 @@
     margin: 0 10px;
     background-color: #dfdfdf68;
 }
+
+@media (max-width: 768px){
+    #chatbot-window{
+        width: 90vw;
+    }
+}

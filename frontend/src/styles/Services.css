@@ -1,23 +1,10 @@
-.services {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin-top: 4rem;
-    
+.services-sec{
+    padding: 10vw;
+    padding-top: 200px;
+    height: 135vh;
 }
 
-.services h1 {
-    font-size: 4rem;
-    margin-bottom: 2rem;
-    color: black;
-}
-
-.card-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 20px;
-    gap: 2%;
+.service-head{
+    font-size: 5vw;
+    font-weight: 600;
 }

@@ -9,9 +9,11 @@ import 'bootstrap/dist/css/bootstrap.css';
 import SuperAdmin from './pages/SuperAdmin';
 import Requests from './pages/Requests';
 import RequestDetail from './pages/RequestDetail';
+import Footer from './components/Footer';
 
 function App() {
   return (
+    <>
     <AuthProvider>
       <Router>
         <Routes>
@@ -23,8 +25,11 @@ function App() {
           <Route path="/requests/:id" element={<RequestDetail />} />
           <Route path="*" element={<h1>404 Not Found</h1>} />
         </Routes>
+        <Footer/>
       </Router>
     </AuthProvider>
+    </>
+
   );
 }
 

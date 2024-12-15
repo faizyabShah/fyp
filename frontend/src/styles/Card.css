@@ -1,53 +1,52 @@
 .cardd {
-    display: flex !important;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 50px;
+    border-radius: 30px;
     /* box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; */
-    border: none;
+    border: 1px solid #eaeeee;
     background-color: white;
     overflow: hidden;
-    margin: 1rem;
-    width: 20%;
-    min-width: 400px;
-    padding-top: 1.5rem;
+    position: relative;
+    /* margin: 1rem; */
+    min-width: 25vw;
     min-height: 500px;
-    background-image: url('../../public/media/card-background3.jpg');
-    background-size: cover;
-    backdrop-filter: blur(5px);
     z-index: -1;
+    
 }
 
-.cardd h2 {
-
-    font-size: 1.8rem;
+.cardd h1 {
+    font-size: 1.9rem;
     margin: 1rem;
     margin-top: 2.5rem;
-
     text-align: center;
-    color: white;
-
 }
 
-.cardd .ptag {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 40%;
-    color: white;
-    padding: 2rem;
-    backdrop-filter: blur(5px);
-    padding: 1rem;
+.inner{
+    height: 65%; 
+    position: absolute;
+    background-color: #eaeeee;
     width: 100%;
-    padding-bottom: 0 !important;
-
+    bottom:0;
 }
 
-.cardd .ptag p {
-    text-align: center;
-    font-size: 1.4rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+.nob{
+    width: 30px;
+    height: 4px;
+    background-color: #a0a0a0;
+    border-radius: 12px;
+}
+
+.cardd h1{
+    color: #222;
+    opacity: .7;
+}
+
+.cardd p{
+    width: 100%;
+    text-align: start;
+    padding: 10px 40px;
+    color: #566;
+}
+.icon{
+    width: 30px;
+    height: 30px;
+    fill: rgb(102, 66, 0);
 }
