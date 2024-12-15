@@ -9,32 +9,40 @@ import { useAuth } from '../contexts/Authcontext';
 const Signup = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
-    const [coordinates, setCoordinates] = useState([]);
+    const [phone, setPhone] = useState([]);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [numPlots, setNumPlots] = useState(0);
+    const [language, setLanguage] = useState('English');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [address, setAddress] = useState('');
 
     // Custom hook to handle map events
-    const MapClickHandler = () => {
-        useMapEvents({
-            click: (event) => {
-                const { lat, lng } = event.latlng;
-                setCoordinates([...coordinates, [lat, lng]]);
-            },
-        });
-        return null;
-    };
+    // const MapClickHandler = () => {
+    //     useMapEvents({
+    //         click: (event) => {
+    //             const { lat, lng } = event.latlng;
+    //             setCoordinates([...coordinates, [lat, lng]]);
+    //         },
+    //     });
+    //     return null;
+    // };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
     
         const userData = {
             name: name,
             email: email,
             password: password,
-            coordinates: coordinates,
-            numPlots: numPlots,
+            phone: phone,
+            language: language,
+            address: address,
         };
     
         try {
@@ -89,7 +97,34 @@ const Signup = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-                    <div className="map">
+                    <input
+                        type="password"
+                        placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                    />
+                    <p>Preferred language</p>
+                    <select
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                    >
+                        <option value="English">English</option>
+                        <option value="Urdu">Urdu</option>
+                    </select>
+                    <input
+                        type="text"
+                        placeholder="Address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                    />
+
+                    {/* <div className="map">
                         <p>Select your field</p>
                         <MapContainer center={[0, 0]} zoom={2} style={{ height: '500px', width: '100%' }}>
                             <TileLayer 
@@ -103,14 +138,14 @@ const Signup = () => {
                                 </Marker>
                             ))}
                         </MapContainer>
-                    </div>
-                    <p>Number of plots</p>
+                    </div> */}
+                    {/* <p>Number of plots</p>
                     <input 
                         type="number" 
                         placeholder="Number of plots" 
                         value={numPlots}
                         onChange={(e) => setNumPlots(e.target.value)}
-                    />
+                    /> */}
                     <div className="noaccount">
                         <p>Already have an account? <a href="/#Login">Log in</a></p>
                     </div>

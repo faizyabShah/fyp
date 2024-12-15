@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../styles/Navbar.css';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = ({ fixed, dashboard, token }) => {
+const Navbar = ({ fixed, dashboard, token, fromhome }) => {
     const navigate = useNavigate();
     const [isVisible, setIsVisible] = useState(true);
     const [isAtTop, setIsAtTop] = useState(true);  // Track if we are at the top
@@ -72,6 +72,7 @@ const Navbar = ({ fixed, dashboard, token }) => {
                         <div onClick={() => { goTo("/") }} className='navlink'>Home</div>
                         <div onClick={() => { goTo("/services") }} className='navlink'>Services</div>
                         <div onClick={() => { goTo("/aboutus") }} className='navlink'>About Us</div>
+                        {fromhome ? <div onClick={() => { goTo("/signup") }} className='navlink'>Signup</div> : null}
                         <div className='navlink'>Contact</div>
                     </div>
                 </div>

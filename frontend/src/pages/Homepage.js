@@ -11,7 +11,7 @@ import Services from '../components/Services';
 const Homepage = () => {
     return (
     <div className="App">
-        <Navbar fixed={true}/>
+        <Navbar fixed={true} fromhome={true}/>
             <Home />
             <Services/>
             <Login />

@@ -22,8 +22,9 @@ cursor.execute('''
         email TEXT PRIMARY KEY, 
         password BLOB,  -- Store password as binary data (BLOB)
         name TEXT, 
-        coordinates TEXT, 
-        plots INTEGER
+        phone TEXT,
+        language TEXT,
+        address TEXT
     )
 ''')
 conn.commit()
@@ -35,14 +36,15 @@ def signup():
     data = request.get_json()
 
     # Validate input
-    if not data or 'email' not in data or 'password' not in data or 'name' not in data or 'coordinates' not in data or 'numPlots' not in data:
-        return jsonify({'error': 'Missing email, password, name, coordinates, or plots'}), 400
+    if not data or 'email' not in data or 'password' not in data or 'name' not in data or 'phone' not in data or 'language' not in data or 'address' not in data:
+        return jsonify({'error': 'Missing email, password, name, phone, or language'}), 400
 
     email = data['email']
     password = data['password']
     name = data['name']
-    coordinates = str(data['coordinates'])  # Convert to string for storage
-    plots = data['numPlots']
+    phone = str(data['phone'])  # Convert to string for storage
+    language = data['language']
+    address = data['address']
 
     # Connect to SQLite database
     conn = sqlite3.connect('users.db')
@@ -53,14 +55,15 @@ def signup():
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
         # Insert the user into the database
-        cursor.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?)', (email, hashed_password, name, coordinates, plots))
+        cursor.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)', (email, hashed_password, name, phone, language, address))
         conn.commit()
         token = jwt.encode(
                 {
                     'email': email, 
                     'name': name , 
-                    'plots': plots, 
-                    'coordinates': coordinates, 
+                    'phone': phone, 
+                    'language': language, 
+                    'address': address,
                     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
                 app.config['JWT_SECRET'],
                 algorithm='HS256'
@@ -105,8 +108,9 @@ def login():
                 {
                     'email': user[0],
                     'name': user[2] , 
-                    'coordinates': user[3], 
-                    'plots': user[4],
+                    'phone': user[3], 
+                    'language': user[4],
+                    'address': user[5], 
                     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
                 },
                 app.config['JWT_SECRET'],

@@ -20,13 +20,18 @@ const Dashboard = () => {
     const [fieldImg, setFeildImg] = useState('./media/field.jpg');
     const [selectedField, setSelectedField] = useState('Field 1');
     const [userName, setUserName] = useState("Faizyab Ali Shah");
+    const [address, setAddress] = useState("Gujar Garhi, Mardan")
     const navigate = useNavigate();
 
     const legend = [
-        {color:'red', text:"LEGEND 1" },
-        {color:'blue', text:"LEGEND 2" },
-        {color:'yellow', text:"LEGEND 3" },
-        {color:'green', text:"LEGEND 4" },
+        {color:'red', text:"Pre-germination" },
+        {color:'orange', text:"Germination" },
+        {color:'yellow', text:"Tillering" },
+        {color:'green', text:"Jointing" },
+        {color:'blue', text:"Booting" },
+        {color:'purple', text:"Heading" },
+        {color:'cyan', text:"Anthesis" },
+        {color:'magenta', text:"Grain Filling" },
     ];
 
     useEffect (() => {
@@ -95,7 +100,7 @@ const Dashboard = () => {
                                 <div className='text-grey'>Manager - Farmer</div>
                             </div>
                         </div>
-                        <p className='profile-para p-4'>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Omnis sint laborum odit, accusantium modi ipsum, harum quis  Omnis sint laborum odit, accusantium modi ipsum, harum quis, labore obcaecati voluptatum ratione. Placeat modi non unde blanditiis recusandae esse incidunt repudiandae?</p>
+                        <p className='profile-para p-4'>A wheat farm manager, from the area of {address}.</p>
 
                     </div>
                     <div className="col-md-3">

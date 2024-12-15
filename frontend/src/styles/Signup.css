@@ -7,6 +7,7 @@
   align-items: center;
   background-color: #f5f5f5;
   width: 100%;
+  margin-top: 5rem;
 }
 
 .signup img {
@@ -112,4 +113,42 @@ width: 50%;
 
 .signup-container .inputfields input[type='submit']:disabled:hover {
   background-color: #8b8b8b;
+}
+
+
+/* Style for the select element */
+select {
+  padding: 10px 20px;
+  border-radius: 2rem;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect for select */
+select:hover {
+  border-color: #888;
+  background-color: #f1f1f1;
+}
+
+/* Focus effect for select */
+select:focus {
+  border-color: #000000;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Style for the options */
+option {
+  padding: 10px;
+  background-color: #fff;
+  font-size: 16px;
+}
+
+/* Optional: style for better accessibility on focus */
+select:focus option {
+  background-color: #e8f0fe;
 }
