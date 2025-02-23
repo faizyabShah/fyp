@@ -25,25 +25,23 @@ def get_user_info():
     # Fetch the user's data from the "users" table
     cursor.execute('SELECT * FROM users WHERE email = ?', (user_email,))
     user_data = cursor.fetchone()
+    user_data = dict(user_data)
+    data = {
+        'email': user_data['email'],
+        'name': user_data['name'],
+        'phone': user_data['phone'],
+        'language': user_data['language'],
+        'address': user_data['address']
+    }
     if not user_data:
         conn.close()
         return jsonify({'error': 'User not found'}), 404
-
-    # Fetch the user's fields from the "fields" table
-    cursor.execute('SELECT * FROM fields WHERE user_email = ?', (user_email,))
-    fields_data = cursor.fetchall()
-
-    # Fetch the user's requests from the "requests" table
-    cursor.execute('SELECT * FROM requests WHERE user_email = ?', (user_email,))
-    requests_data = cursor.fetchall()
 
     conn.close()
 
     # Prepare the response payload
     response = {
-        'user': dict(user_data),
-        'fields': [dict(field) for field in fields_data],
-        'requests': [dict(req) for req in requests_data]
+        'user': data
     }
 
     return jsonify(response), 200

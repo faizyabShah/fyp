@@ -47,6 +47,6 @@ def login():
     user = cursor.fetchone()
 
     if user and verify_password(password, user['password']):
-        token = jwt.encode({'email': email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=1)}, Config.JWT_SECRET, algorithm='HS256')
+        token = jwt.encode({'email': email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, Config.JWT_SECRET, algorithm='HS256')
         return jsonify({'token': token}), 200
     return jsonify({'error': 'Invalid credentials'}), 401

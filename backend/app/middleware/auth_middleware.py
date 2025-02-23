@@ -12,9 +12,16 @@ def authenticate_request():
     token = auth_header.split(" ")[1]
 
     try:
-        decoded = jwt.decode(token, Config.JWT_SECRET, algorithms=['HS256'])
+        decoded = jwt.decode(token, Config.JWT_SECRET, algorithms=["HS256"])
+
+        print(decoded)
         return decoded  # Contains 'email'
     except jwt.ExpiredSignatureError:
+        print("EXPIRED")
         return jsonify({'error': 'Token expired'}), 401
     except jwt.InvalidTokenError:
+        print("INVALIDE")
         return jsonify({'error': 'Invalid token'}), 401
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'Error decoding token'}), 401

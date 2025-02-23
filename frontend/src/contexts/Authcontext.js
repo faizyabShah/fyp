@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }) => {
 
     // Save the token to localStorage and update state
     const login = (newToken) => {
-        console.log("HERE")
         localStorage.setItem('token', newToken);
         setToken(newToken);
         setIsAuthenticated(true);

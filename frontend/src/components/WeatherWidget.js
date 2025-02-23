@@ -19,7 +19,6 @@ const WeatherWidget = () => {
       const response = await fetch(
         `api.openweathermap.org/data/2.5/forecast?lat=44.34&lon=10.99&appid=${API_KEY}`
       );
-      console.log(response)
       if (!response.ok) throw new Error("City not found");
       const data = await response.json();
 

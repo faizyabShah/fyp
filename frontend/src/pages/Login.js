@@ -33,7 +33,6 @@ const Login = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Login successful:', data);
                 login(data.token); // Assuming the backend sends a token
                 navigate('/dashboard');
                 window.scrollTo(0, 0);
@@ -67,7 +66,6 @@ const Login = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Sign Up successful:', data);
                 setSignUpIn(0); // Switch back to login form
             } else {
                 const errorData = await response.json();

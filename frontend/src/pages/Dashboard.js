@@ -11,6 +11,8 @@ import FieldDisplay from '../components/FieldDisplay';
 import PhenologyData from '../components/PhenologyData';
 import FieldInfo from '../components/FieldInfo';
 import Legend from '../components/Legend';
+import AddFieldForm from '../components/AddFieldForm';
+import Modal from '../components/Modal'; // Import the Modal component
 import ReadOnlyMap from '../components/ReadOnlyMap';
 
 const Dashboard = () => {
@@ -20,8 +22,19 @@ const Dashboard = () => {
     const [fieldImg, setFeildImg] = useState('./media/field.jpg');
     const [selectedField, setSelectedField] = useState('Field 1');
     const [userName, setUserName] = useState("Faizyab Ali Shah");
-    const [address, setAddress] = useState("Gujar Garhi, Mardan")
+    const [address, setAddress] = useState("Gujar Garhi, Mardan");
+    const [userRequests, setUserRequests] = useState(null);
+    const [showModal, setShowModal] = useState(false);
     const navigate = useNavigate();
+
+    const toggleAddFieldForm = () => {
+        setShowModal(true);  // Open modal
+    };
+
+    const closeModal = () => {
+        setShowModal(false);  // Close modal
+    };
+
 
     const legend = [
         {color:'red', text:"Pre-germination" },
@@ -34,62 +47,96 @@ const Dashboard = () => {
         {color:'magenta', text:"Grain Filling" },
     ];
 
-    useEffect (() => {
-        setUserFieldData(
-            ['Field 1', 'Field 2']
-            // []
-        );
-    }, []);
+
+
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/user', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+    
+                if (!response.ok) {
+                    // Token is invalid or expired, redirect to login
+                    navigate('/');
+                } else {
+                    const data = await response.json();
+                    setUserName(data.user.name);
+                    setAddress(data.user.address);
+                    // Fetch the user's fields after user info is fetched
+                    fetchUserFields(data.user.email);
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                navigate('/');  // Redirect to login if any error occurs
+            }
+        };
+        
+
+        if (token) {
+            fetchUserInfo();
+        }
+        // }
+    }, [token]);
+
+    const fetchUserFields = async (userEmail) => {
+        try {
+            const response = await fetch(`http://localhost:5000/fields`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const fieldsData = await response.json();
+                setUserFieldData(fieldsData);
+                fetchUserRequests(userEmail);
+            } else {
+                console.error('Failed to fetch fields');
+            }
+        } catch (error) {
+            console.error('Error fetching user fields:', error);
+        }
+    };
+
+    const fetchUserRequests = async (userEmail) => {
+        try {
+            const response = await fetch(`http://localhost:5000/requests`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const requestsData = await response.json();
+                setUserRequests(requestsData);
+            } else {
+                console.error('Failed to fetch requests');
+            }
+        } catch (error) {
+            console.error('Error fetching user requests:', error);
+        }
+    };
+    
 
     const getPredictions = (flag) => {
         flag == 0 ? setFeildImg('./media/field_masked.jpg') : setFeildImg('./media/field.jpg')
     }
 
 
-    if (!isAuthenticated || token == null) {
-        navigate('/signup'); // Redirect to signup if not authenticated
-        return null;
-    }
-    
-    const payload = token.split('.')[1];
-    const data = JSON.parse(atob(payload));
-
-    const handleToggle = () => {
-        setIsToggled(!isToggled);
-    };
-
-    const fetchAIResponse = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    text: "My wheat crop is currently in germination and tillering stage. Tell me what should be done in these stages for spring wheat for better crop health and more yield. Also tell me what are some of the dangers (IF THERE ARE ANY) in this stage of the crop and what I should do about it? Give a very brief and precise answer that a farmer should understand."
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-            } else {
-                console.error('Failed to fetch AI response');
-            }
-        } catch (error) {
-            console.error('Error fetching AI response:', error);
-        }
-    };
-
-
     return (
         <>
             <Chatbot />
-            <Navbar fixed={false} dashboard={true} token={data} />
+            <Navbar fixed={false} dashboard={true} />
             <div className="dashboards pt-5" id="Dashboard">
 
                 <div className="row pad-5">
-                    <div className="col-md-9">
+                    <div className="col-md-6">
 
                         <div className=" d-flex m-4 justify-content-start align-items-center">
                             <div className="profile">
@@ -100,18 +147,26 @@ const Dashboard = () => {
                                 <div className='text-grey'>Manager - Farmer</div>
                             </div>
                         </div>
-                        <p className='profile-para p-4'>A wheat farm manager, from the area of {address}.</p>
+                        <p className='profile-para p-4'>{address}.</p>
 
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                         <WeatherWidget />
                     </div>
                     {
-                        userFieldData == null?
+                        userFieldData == null || userFieldData.length == 0?
                         <div className="col-md-12 p-3">
-                            <div className="no-field box-cont d-flex justify-content-center flex-column align-items-center">
+                            <div className="no-field box-cont d-flex justify-content-center flex-column align-items-center gap-4">
                                 <h3 className='text-grey'>You don't have any fields yet</h3>
-                                <button className='primary-btn '>Click to Add</button>
+                                <button className='primary-btn' onClick={toggleAddFieldForm}>Add New Field</button>
+
+                                <Modal showModal={showModal} onClose={closeModal}>
+                                    <AddFieldForm 
+                                        token={token} 
+                                        setUserFieldData={setUserFieldData} 
+                                        navigate={navigate}
+                                    />
+                                </Modal>
                             </div>
                         </div>
                         :

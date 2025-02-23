@@ -140,7 +140,6 @@ const Chatbot = () => {
                 }
         
                 const data = await response.json(); // Parse the JSON response from the backend
-                console.log(data)
                 return data.response;
             } catch (error) {
                 console.error("Error fetching chatbot response:", error);
