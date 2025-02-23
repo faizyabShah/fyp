@@ -40,7 +40,6 @@ const Footer = () => {
 
     return (
         <>
-        <ContactUsCard/>
         <footer className="footer">
             <div className="d-flex pt-3">
                 <div className="col-4">

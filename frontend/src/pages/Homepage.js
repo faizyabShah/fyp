@@ -1,22 +1,30 @@
-import Home from './Home';
-import Login from './Login';
-import Navbar from '../components/Navbar';
-
-
-// create a home component that has the text Take care of your crops from home with a button that says Get Started
 import React from 'react';
-import '../styles/Home.css';
+import { Element } from 'react-scroll';
+import Navbar from '../components/Navbar';
+import Home from '../pages/Home';
 import Services from '../components/Services';
+import Login from '../pages/Login';
+import ContactUsCard from '../components/ContactUsCard';
+import '../styles/Home.css';
 
 const Homepage = () => {
-    return (
+  return (
     <div className="App">
-        <Navbar fixed={true} fromhome={true}/>
-            <Home />
-            <Services/>
-            <Login />
-        </div>
-    );
-}
+      <Navbar fixed={true} fromhome={true} />
+      <Element name="home" className="element">
+        <Home />
+      </Element>
+      <Element name="services" className="element">
+        <Services />
+      </Element>
+      <Element name="login" className="element">
+        <Login />
+      </Element>
+      <Element name="contact" className="element">
+        <ContactUsCard />
+      </Element>
+    </div>
+  );
+};
 
 export default Homepage;

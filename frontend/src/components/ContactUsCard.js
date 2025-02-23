@@ -7,7 +7,7 @@ const ContactUsCard = () => {
         <>
         <div className="row contac-margin">
             <div className="col-md-7 d-flex justify-content-center padding-contact flex-column">
-                <h1 className="txt-lg-contact head-highlight">Want to Schedule a quick Drone Flight?</h1>
+                <h1 className="txt-lg-contact head-highlight">Want to Know more about how it's done?</h1>
                 <p className="txt-sm-contact">Let's Get in Touch!</p>
                 <button className='primary-btn'>Contact Us</button>
             </div>

@@ -1,84 +1,103 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/Navbar.css';
+import { Link } from 'react-scroll';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ fixed, dashboard, token, fromhome }) => {
-    const navigate = useNavigate();
-    const [isVisible, setIsVisible] = useState(true);
-    const [isAtTop, setIsAtTop] = useState(true);  // Track if we are at the top
-    const [lastScrollTop, setLastScrollTop] = useState(0);
-    const [scrollTimeout, setScrollTimeout] = useState(null);
+  const navigate = useNavigate();
+  const [isVisible, setIsVisible] = useState(true);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
+  const [scrollTimeout, setScrollTimeout] = useState(null);
 
-    // Function to navigate to different destinations
-    const goTo = (destination) => {
-        navigate(destination);
-        window.scrollTo(0, 0);
+  // Optional: for routing to other pages (e.g., signup)
+  const goTo = (destination) => {
+    navigate(destination);
+    window.scrollTo(0, 0);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+      if (currentScrollTop === 0) {
+        setIsAtTop(true);
+        setIsVisible(true);
+        return;
+      } else {
+        setIsAtTop(false);
+      }
+
+      if (currentScrollTop > lastScrollTop) {
+        setIsVisible(false);
+      } else if (currentScrollTop < lastScrollTop) {
+        setIsVisible(true);
+      }
+
+      setLastScrollTop(currentScrollTop);
+
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+
+      if (currentScrollTop > 0) {
+        setScrollTimeout(setTimeout(() => {
+          if (!isAtTop) {
+            setIsVisible(false);
+          }
+        }, 1500));
+      }
     };
 
-    useEffect(() => {
-        const handleScroll = () => {
-            const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
+  }, [lastScrollTop, scrollTimeout, isAtTop]);
 
-            // Check if we are at the top of the page
-            if (currentScrollTop === 0) {
-                setIsAtTop(true);
-                setIsVisible(true);  // Always show the navbar at the top
-                return;
-            } else {
-                setIsAtTop(false);
-            }
-
-            // If scrolling down, hide the navbar
-            if (currentScrollTop > lastScrollTop) {
-                setIsVisible(false);
-            } 
-            // If scrolling up, show the navbar
-            else if (currentScrollTop < lastScrollTop) {
-                setIsVisible(true);
-            }
-
-            // Update the last scroll position
-            setLastScrollTop(currentScrollTop);
-
-            // Reset timeout if scrolling stopped midway
-            if (scrollTimeout) {
-                clearTimeout(scrollTimeout);
-            }
-
-            // Set timeout to hide navbar after 1500ms if stopped (only when not at the top)
-            if (currentScrollTop > 0) {
-                setScrollTimeout(setTimeout(() => {
-                    if (!isAtTop) {
-                        setIsVisible(false);  // Hide if not at the top
-                    }
-                }, 1500));
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll);
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            if (scrollTimeout) clearTimeout(scrollTimeout);
-        };
-    }, [lastScrollTop, scrollTimeout, isAtTop]);
-
-    return (
-        <nav className={`my-navbar ${isVisible ? 'visible' : 'invisible'}`}>
-            <div className={`nav-blur ${dashboard ? 'dash-nav' : ''}`}>
-                <div className="d-flex justify-content-between">
-                    <img src="./media/wheat-plant.png" onClick={() => { goTo("/") }} className='nav-logo' />
-                    <div className='d-flex justify-content-center px-4 mx-4 align-items-center'>
-                        <div onClick={() => { goTo("/") }} className='navlink'>Home</div>
-                        <div onClick={() => { goTo("/services") }} className='navlink'>Services</div>
-                        <div onClick={() => { goTo("/aboutus") }} className='navlink'>About Us</div>
-                        {fromhome ? <div onClick={() => { goTo("/signup") }} className='navlink'>Signup</div> : null}
-                        <div className='navlink'>Contact</div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    );
+  return (
+    <nav className={`my-navbar ${isVisible ? 'visible' : 'invisible'}`}>
+      <div className={`nav-blur ${dashboard ? 'dash-nav' : ''}`}>
+        <div className="d-flex justify-content-between">
+          {/* Using react-scroll Link for smooth scrolling */}
+          <Link 
+            to="home" 
+            smooth={true} 
+            duration={500} 
+            className="nav-logo-link"
+          >
+            <img
+              src="./media/wheat-plant.png"
+              className="nav-logo"
+              alt="logo"
+            />
+          </Link>
+          <div className="d-flex justify-content-center px-4 mx-4 align-items-center">
+            {fromhome ? <Link to="home" smooth={true} duration={500} className="navlink">
+              Home
+            </Link> : <Link onClick={() => goTo('/')} className="navlink">Home</Link>}
+            {fromhome && <Link to="services" smooth={true} duration={500} className="navlink">
+              Services
+            </Link>}
+            {fromhome && (
+              <Link to="login" smooth={true} duration={500} className="navlink">
+                Login
+              </Link>
+            )}
+            {fromhome && <Link to="contact" smooth={true} duration={500} className="navlink">
+              Contact
+            </Link>}
+            {fromhome && (
+              <div onClick={() => goTo('/signup')} className="navlink">
+                Signup
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
 };
 
 export default Navbar;
