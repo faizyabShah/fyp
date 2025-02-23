@@ -125,7 +125,7 @@ const Chatbot = () => {
 
         // Dummy API function
         const fetchChatbotResponse = async (message, phen_stage) => {
-            const promptText = `You're name is ${phen_stage}, your answers should have your name in it`;
+            const promptText = `Your name is Farmsense, Remember this name. You are supposed to be a helpful assistant for agriculture related queries.`;
             try {
                 const response = await fetch('http://localhost:5000/generate', {
                     method: 'POST',
@@ -159,7 +159,7 @@ const Chatbot = () => {
                 </button>
                 <div id="chatbot-window" style={{ display: 'none' }}>
                     <div id="chatbot-header">
-                        <span>Virtual Assistant</span>
+                        <span>Farmsense</span>
                         <button id="chatbot-close">✖</button>
                     </div>
                     <div id="chatbot-messages"></div>

@@ -1,28 +1,43 @@
-/* create styles for classes signup signup-container and inside signup-container we have h1 inputfields class
- */
-
 .signup {
   display: flex;
-  justify-content: space-around;
+  justify-content: center; /* center both sections */
   align-items: center;
   background-color: #f5f5f5;
   width: 100%;
-  margin-top: 5rem;
+  margin: 2rem;
 }
 
-.signup img {
-  border-radius: 50px;
+/* New classes for two equal sections */
+.signup-left, .signup-right {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+.signup-left img {
+  width: 100%;
+  height: auto;
+  /* Rounded on the outer left side, squared on the right side */
+  border-radius: 50px 0 0 50px;
+}
+
+/* Existing styles for the signup container and its children */
 .signup-container {
-width: 50%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2rem;
   padding: 5rem;
-  border-radius: 50px;
+  /* Default border-radius is removed in favor of per-side rounding */
+  border-radius: 50px; 
+}
+
+/* Override the container border radius within the right section so the left side is squared */
+.signup-right .signup-container {
+  border-radius: 0 50px 50px 0;
 }
 
 .signup-container h1 {
@@ -60,7 +75,7 @@ width: 50%;
 }
 
 .signup-container p {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .signup-container .inputfields label {
@@ -114,7 +129,6 @@ width: 50%;
 .signup-container .inputfields input[type='submit']:disabled:hover {
   background-color: #8b8b8b;
 }
-
 
 /* Style for the select element */
 select {

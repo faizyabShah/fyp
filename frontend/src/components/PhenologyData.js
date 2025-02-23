@@ -10,16 +10,16 @@ const PhenologyData = (selectedField) => {
     const [phenStage, setPhenStage] = useState(null);
 
     useEffect(() => {
-        setCropName('ABC');
+        setCropName('Wheat');
         setAcres(100);
-        setPhenStage('Seedling');
+        setPhenStage('Grain Filling');
         setScheduled(0);
     }, [selectedField]);
 
     return (
         <>
             <div className="p-2">
-                <h4 className="mb-4">Estimated Crop Phenology Data</h4>
+                <h4 className="mb-4">Estimated Crop Phenology Stage</h4>
                 <div className="d-flex my-5 justify-content-center flex-column align-items-center">
                     <img className="img-fluid phen-stage-img" src='./media/chatbot.png'/>
                     <h2 className="px-3">{phenStage}</h2>
