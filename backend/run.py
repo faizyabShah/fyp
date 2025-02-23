@@ -1,8 +1,9 @@
 from flask import Flask
 from flask_cors import CORS
 from app.routes.auth import auth_bp
-from app.routes.generate import generate_bp
-from app.database import init_db  # Import the database initialization function
+from app.routes.fields import fields_bp
+from app.routes.requests import requests_bp
+from app.database import init_db
 
 app = Flask(__name__)
 CORS(app)
@@ -12,7 +13,8 @@ init_db()
 
 # Register blueprints
 app.register_blueprint(auth_bp)
-app.register_blueprint(generate_bp)
+app.register_blueprint(fields_bp)
+app.register_blueprint(requests_bp)
 
 if __name__ == '__main__':
     app.run(port=5000)
