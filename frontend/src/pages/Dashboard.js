@@ -148,11 +148,14 @@ const Dashboard = () => {
                                 <div className='text-grey'>Manager - Farmer</div>
                             </div>
                         </div>
-                        <p className='profile-para p-4'>{address}.</p>
+                        <p className='profile-para px-5'>{address}.</p>
 
                     </div>
                     <div className="col-md-6">
                         <WeatherWidget />
+                    </div>
+                    <div className="col-md-12 px-5 pt-5 border-bottom border-3">
+                        <h2 className="section-heading">Your Crops</h2>
                     </div>
                     {
                         userFieldData == null || userFieldData.length == 0?

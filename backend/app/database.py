@@ -31,10 +31,12 @@ def init_db():
         CREATE TABLE IF NOT EXISTS fields (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_email TEXT NOT NULL,
-            name TEXT,
+            name TEXT NOT NULL UNIQUE,
             coordinates TEXT NOT NULL,  -- Store as JSON string
             crop TEXT NOT NULL,
-            plantation_date TEXT NOT NULL,  -- Store as ISO date string
+            plantation_date TEXT NOT NULL,  -- Store as ISO date string,
+            latest_phenology_stage TEXT,
+            latest_observation_date TEXT,  -- Store as ISO date string
             FOREIGN KEY(user_email) REFERENCES users(email) ON DELETE CASCADE
         )
     ''')

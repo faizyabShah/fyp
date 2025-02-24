@@ -93,6 +93,11 @@ const Navbar = ({ fixed, dashboard, token, fromhome }) => {
                 Signup
               </div>
             )}
+            {fromhome && (
+              <div onClick={() => goTo('/dashboard')} className="navlink">
+                Dashboard
+              </div>
+            )}
           </div>
         </div>
       </div>
