@@ -2,20 +2,24 @@ import React, { useState } from 'react';
 import LeafletMap from './LeafletMap';  // Import LeafletMap component
 
 const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
-    const [coordinates, setCoordinates] = useState(null);  // Store coordinates
+    const [coordinates, setCoordinates] = useState(null);  // Store polygon coordinates
     const [crop, setCrop] = useState('');
     const [plantationDate, setPlantationDate] = useState('');
+    const [name, setName] = useState('')
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!coordinates) {
-            alert("Please select coordinates on the map.");
+        if (!coordinates || coordinates.length === 0) {
+            alert("Please select a polygon on the map.");
             return;
         }
 
+        // Format the coordinates (flatten the array)
+
         const fieldData = { 
-            coordinates: `${coordinates.lat},${coordinates.lng}`,
+            coordinates: String(coordinates), // Store the polygon coordinates
+            name,
             crop, 
             plantation_date: plantationDate 
         };
@@ -47,9 +51,19 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
     return (
         <form onSubmit={handleSubmit}>
             <div>
-                <label htmlFor="coordinates">Coordinates:</label>
+                <label htmlFor="coordinates">Coordinates (Polygon):</label>
                 {/* Embed the LeafletMap component here */}
                 <LeafletMap setCoordinates={setCoordinates} />
+            </div>
+            <div>
+                <label htmlFor="name">Name:</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required 
+                />
             </div>
             <div>
                 <label htmlFor="crop">Crop:</label>

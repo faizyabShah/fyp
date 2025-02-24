@@ -1,61 +1,88 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Rectangle, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-// Custom hook to update map center and zoom
-const ResetMapView = ({ bounds }) => {
+function parseLatLngString(str) {
+  return str
+    .replace(/LatLng\(/g, "")
+    .split("),")
+    .map((chunk) => {
+      const cleaned = chunk.replace(/\)/g, "").trim();
+      const [latStr, lngStr] = cleaned.split(",").map((s) => s.trim());
+      return [parseFloat(latStr), parseFloat(lngStr)];
+    });
+}
+
+// This component automatically fits the view to the polygon coords
+const FitPolygonBounds = ({ coordinates }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (bounds.length > 0) {
-      const latLngBounds = bounds.map(bound => [
-        [bound[0][0], bound[0][1]],
-        [bound[1][0], bound[1][1]],
-      ]);
-      map.fitBounds(latLngBounds.flat());
+    if (coordinates.length > 0) {
+      const bounds = L.latLngBounds(coordinates);
+      map.fitBounds(bounds);
     }
-  }, [bounds, map]);
+  }, [coordinates, map]);
 
   return null;
 };
 
-const ReadOnlyMap = ({ fieldName }) => {
-  const [bounds, setBounds] = useState([]);
-
-  const coordinatesArray = {
-    'Field 1': [
-      { lat1: 33.67413061298404,  lon1: 73.12554562029183, lat2: 33.67160350659859, lon2: 73.13318814660003 },
-      // { lat1: 33.67065690515361, lon1: 73.12911446922986, lat2: 33.67116200117063, lon2: 73.13117797898958 },
-    ],
-    'Field 2': [
-      { lat1: -51.49, lon1: 0.08, lat2: -51.5, lon2: 0.06 },
-      { lat1: -51.51, lon1: 0.1, lat2: -51.52, lon2: 0.09 },
-    ],
-  };
+// This component toggles scrollWheelZoom on mouse enter/leave
+const HoverScrollEnable = () => {
+  const map = useMap();
 
   useEffect(() => {
-    const finalCoords = coordinatesArray[fieldName] || [];
-    const calculatedBounds = finalCoords.map(coord => [
-      [coord.lat1, coord.lon1],
-      [coord.lat2, coord.lon2],
-    ]);
-    setBounds(calculatedBounds);
-  }, [fieldName]);
+    const container = map.getContainer();
+
+    function handleMouseEnter() {
+      map.scrollWheelZoom.enable(); // Turn on zoom when hovered
+    }
+    function handleMouseLeave() {
+      map.scrollWheelZoom.disable(); // Turn off zoom when not hovered
+    }
+
+    container.addEventListener("mouseenter", handleMouseEnter);
+    container.addEventListener("mouseleave", handleMouseLeave);
+
+    // Cleanup
+    return () => {
+      container.removeEventListener("mouseenter", handleMouseEnter);
+      container.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [map]);
+
+  return null;
+};
+
+const ReadOnlyMap = ({ selectedField }) => {
+  const [polygonCoords, setPolygonCoords] = useState([]);
+
+  useEffect(() => {
+    if (selectedField?.coordinates) {
+      setPolygonCoords(parseLatLngString(selectedField.coordinates));
+    } else {
+      setPolygonCoords([]);
+    }
+  }, [selectedField]);
 
   return (
     <MapContainer
-      center={[0, 0]} // Initial placeholder center
-      zoom={13} // Default zoom level
-      scrollWheelZoom={false}
-      style={{ height: '400px', width: '100%' }}
+      center={[0, 0]}
+      zoom={2}
+      style={{ height: "400px", width: "100%" }}
+      scrollWheelZoom={false} // disabled by default
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      {/* Dynamically adjust view when bounds change */}
-      <ResetMapView bounds={bounds} />
-      {/* Render bounding boxes */}
-      {bounds.map((bound, index) => (
-        <Rectangle key={index} bounds={bound} pathOptions={{ color: 'blue' }} />
-      ))}
+
+      {/* Enables scroll wheel zoom only on hover */}
+      <HoverScrollEnable />
+
+      <FitPolygonBounds coordinates={polygonCoords} />
+
+      {polygonCoords.length > 0 && (
+        <Polygon pathOptions={{ color: "blue" }} positions={polygonCoords} />
+      )}
     </MapContainer>
   );
 };

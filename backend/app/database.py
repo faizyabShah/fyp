@@ -31,6 +31,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS fields (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_email TEXT NOT NULL,
+            name TEXT,
             coordinates TEXT NOT NULL,  -- Store as JSON string
             crop TEXT NOT NULL,
             plantation_date TEXT NOT NULL,  -- Store as ISO date string

@@ -18,8 +18,8 @@ def add_field():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO fields (user_email, coordinates, crop, plantation_date) VALUES (?, ?, ?, ?)',
-                   (user['email'], data['coordinates'], data['crop'], data['plantation_date']))
+    cursor.execute('INSERT INTO fields (user_email, name, coordinates, crop, plantation_date) VALUES (?, ?, ?, ?, ?)',
+                   (user['email'], data['name'], data['coordinates'], data['crop'], data['plantation_date']))
     conn.commit()
     conn.close()
     return jsonify({'message': 'Field added successfully'}), 201
@@ -77,9 +77,9 @@ def update_field(field_id):
     # Update the field
     cursor.execute('''
         UPDATE fields
-        SET coordinates = ?, crop = ?, plantation_date = ?
+        SET coordinates = ?, name = ?, crop = ?, plantation_date = ?
         WHERE id = ? AND user_email = ?
-    ''', (data['coordinates'], data['crop'], data['plantation_date'], field_id, user['email']))
+    ''', (data['coordinates'], data['name'], data['crop'], data['plantation_date'], field_id, user['email']))
     
     conn.commit()
     conn.close()

@@ -18,9 +18,9 @@ import ReadOnlyMap from '../components/ReadOnlyMap';
 const Dashboard = () => {
     const { isAuthenticated, token } = useAuth();
     const [isToggled, setIsToggled] = useState(false);
-    const [userFieldData, setUserFieldData] = useState(null);
+    const [userFieldData, setUserFieldData] = useState([]);
     const [fieldImg, setFeildImg] = useState('./media/field.jpg');
-    const [selectedField, setSelectedField] = useState('Field 1');
+    const [selectedField, setSelectedField] = useState(null);
     const [userName, setUserName] = useState("Faizyab Ali Shah");
     const [address, setAddress] = useState("Gujar Garhi, Mardan");
     const [userRequests, setUserRequests] = useState(null);
@@ -94,6 +94,7 @@ const Dashboard = () => {
             if (response.ok) {
                 const fieldsData = await response.json();
                 setUserFieldData(fieldsData);
+                setSelectedField(fieldsData[0]);
                 fetchUserRequests(userEmail);
             } else {
                 console.error('Failed to fetch fields');
