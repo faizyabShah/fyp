@@ -20,7 +20,7 @@
   
   .nav-blur {
     border-radius: 20px;
-    width: 60vw;
+    width: 70vw;
     padding: 5px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px); /* Safari support */

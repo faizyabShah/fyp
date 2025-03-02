@@ -31,14 +31,21 @@ function calculateAreaFromLatLng(coords) {
   return areaInSquareMeters / 4046.86;
 }
 
-// Function to calculate Day of Year (DOY)
+
 function getDayOfYear(dateString) {
-  const date = new Date(dateString);
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff = date - start;
+  const givenDate = new Date(dateString);
+  const currentDate = new Date();
+
+  // Optional: normalize both dates to midnight for a day-accurate difference
+  givenDate.setHours(0, 0, 0, 0);
+  currentDate.setHours(0, 0, 0, 0);
+
   const oneDay = 1000 * 60 * 60 * 24;
+  const diff = currentDate - givenDate;
+  
   return Math.floor(diff / oneDay);
 }
+
 
 const PhenologyData = ({ selectedField }) => {
   const [cropData, setCropData] = useState({
@@ -56,27 +63,29 @@ const PhenologyData = ({ selectedField }) => {
   const [phenStage, setPhenStage] = useState(null);
 
   useEffect(() => {
-    // Simulating fetching data based on selectedField (or use actual API)
-    setCropData((prevData) => ({
-      ...prevData,
-      cropName: selectedField?.name || prevData.cropName,
-      plantationDate: selectedField?.plantation_date || prevData.plantationDate,
-      coordinates: selectedField?.coordinates || prevData.coordinates,
-      latestPhenologyStage: selectedField?.latest_phenology_stage || prevData.latestPhenologyStage,
-      latestObservationDate: selectedField?.latest_observation_date || prevData.latestObservationDate,
-      cropType: selectedField?.crop || prevData.cropType,
-    }));
-
-    const coords = parseLatLngString(cropData.coordinates);
+    if (!selectedField) return;
+    const updatedData = {
+      cropName: selectedField.name || "",
+      plantationDate: selectedField.plantation_date || "",
+      coordinates: selectedField.coordinates || "",
+      latestPhenologyStage: selectedField.latest_phenology_stage || "",
+      latestObservationDate: selectedField.latest_observation_date || "",
+      cropType: selectedField.crop || "",
+    };
+  
+    setCropData(updatedData);
+  
+    const coords = parseLatLngString(updatedData.coordinates);
     const area = calculateAreaFromLatLng(coords);
     setAcres(area);
-
-    const doy = getDayOfYear(cropData.plantationDate);
+  
+    const doy = getDayOfYear(updatedData.plantationDate);
     setDayOfYear(doy);
-
-    setPhenStage("Grain Filling");  // For demonstration, can be dynamic
-    setScheduled(0);  // Can be toggled as per the status
-  }, [selectedField, cropData]);
+  
+    setPhenStage("Grain Filling");
+    setScheduled(0);
+  }, [selectedField]);
+  
 
   return (
     <div className="p-2">

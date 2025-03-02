@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../styles/Login.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/Authcontext';
+import ErrorPopup from '../components/ErrorPopup';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -13,6 +14,8 @@ const Login = () => {
     const [fullName, setFullName] = useState('');
     const [signUpIn, setSignUpIn] = useState(0); // 0 for login, 1 for sign-up
     const [error, setError] = useState(''); // To store error messages
+
+    const closeError = () => setError(null);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -84,6 +87,16 @@ const Login = () => {
     }, [error]);
 
     return (
+        <>
+        {error && (
+            <ErrorPopup 
+                message={error}
+                redirectPath="/"
+                redirectDelay={2500}
+                onClose={closeError}
+                block = {false}
+            />
+        )}
         <div className="d-flex mt-5 justify-content-center pxx-4" id='login'>
             <div className="col-md-6">
                 <div className="img-container-login">
@@ -104,6 +117,7 @@ const Login = () => {
                                         className='form-control mb-3'
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
                                         required
                                     />
                                     <label className='label-login'>Password</label>
@@ -112,6 +126,7 @@ const Login = () => {
                                         className='form-control'
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
                                         required
                                     />
                                     {error && <div className="text-danger text-center">{error}</div>}
@@ -178,6 +193,7 @@ const Login = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

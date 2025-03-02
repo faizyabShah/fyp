@@ -35,8 +35,8 @@ def init_db():
             coordinates TEXT NOT NULL,  -- Store as JSON string
             crop TEXT NOT NULL,
             plantation_date TEXT NOT NULL,  -- Store as ISO date string,
-            latest_phenology_stage TEXT,
-            latest_observation_date TEXT,  -- Store as ISO date string
+            latest_uav_observation_date TEXT,
+            latest_satellite_obeservation_date TEXT,  -- Store as ISO date string
             FOREIGN KEY(user_email) REFERENCES users(email) ON DELETE CASCADE
         )
     ''')
@@ -54,6 +54,32 @@ def init_db():
             FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
         )
     ''')
+
+    # Add this new table creation right after the existing table creations
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS uav (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            field_id INTEGER NOT NULL,
+            observation_date TEXT NOT NULL,  -- ISO date string for the observation date
+            phenological_stages TEXT NOT NULL,  -- JSON array string storing detailed phenological stages
+            field_image TEXT,
+            field_overlay TEXT,
+            FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS satellite (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            field_id INTEGER NOT NULL,
+            observation_date TEXT NOT NULL,  -- ISO date string for the observation date
+            phenological_stages TEXT NOT NULL,  -- JSON array string storing detailed phenological stages
+            uav_image TEXT,
+            uav_overlay TEXT,
+            FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
+        )
+    ''')
+
 
     conn.commit()
     conn.close()
