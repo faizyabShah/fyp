@@ -3,6 +3,7 @@ import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler } from 
 import { RiPlantFill } from 'react-icons/ri';
 import Modal from '../components/Modal';
 import AddFieldForm from '../components/AddFieldForm';
+import LeafletMap from '../components/LeafletMap';
 import '../styles/Fields.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,9 +13,11 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
     crop: field.crop || '',
     area: field.area || '',
     location: field.location || '',
-    plantingDate: field.plantingDate || '',
-    description: field.description || ''
+    plantation_date: field.plantation_date || '',
+    coordinates: field.coordinates || null
   });
+  const [coordinates, setCoordinates] = useState(field.coordinates || null);
+  const [area, setArea] = useState(field.area || null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,14 +26,22 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Include the updated coordinates and area in the field data
+    const updatedFieldData = {
+      ...fieldData,
+      coordinates: coordinates ? String(coordinates) : fieldData.coordinates,
+      area: area ? parseFloat(area.toFixed(2)) : fieldData.area
+    };
+
     try {
-      const response = await fetch(`http://localhost:5000/fields`, {
+      const response = await fetch(`http://localhost:5000/fields/${field.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(fieldData)
+        body: JSON.stringify(updatedFieldData)
       });
 
       if (response.ok) {
@@ -48,75 +59,75 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
     <form onSubmit={handleSubmit} className="field-edit-form">
       <h2>Edit Field</h2>
       
-      <div className="form-group">
-        <label>Field Name</label>
-        <input 
-          type="text" 
-          name="name" 
-          value={fieldData.name} 
-          onChange={handleChange} 
-          className="form-control"
-          required
-        />
-      </div>
-      
-      <div className="form-group">
-        <label>Crop Type</label>
-        <input 
-          type="text" 
-          name="crop" 
-          value={fieldData.crop} 
-          onChange={handleChange} 
-          className="form-control"
-          required
-        />
-      </div>
-      
-      <div className="form-group">
-        <label>Area (hectares)</label>
-        <input 
-          type="number" 
-          name="area" 
-          value={fieldData.area} 
-          onChange={handleChange} 
-          className="form-control"
-          required
-        />
-      </div>
-      
-      <div className="form-group">
-        <label>Location</label>
-        <input 
-          type="text" 
-          name="location" 
-          value={fieldData.location} 
-          onChange={handleChange} 
-          className="form-control"
-          required
-        />
-      </div>
-      
-      <div className="form-group">
-        <label>Planting Date</label>
-        <input 
-          type="date" 
-          name="plantingDate" 
-          value={fieldData.plantingDate} 
-          onChange={handleChange} 
-          className="form-control"
-          required
-        />
-      </div>
-      
-      <div className="form-group">
-        <label>Description</label>
-        <textarea 
-          name="description" 
-          value={fieldData.description} 
-          onChange={handleChange} 
-          className="form-control"
-          rows="3"
-        />
+      <div className="form-content">
+        <div className="map-column">
+          <div className="form-group">
+            <label>Coordinates (Polygon):</label>
+            <div className="map-container">
+              <LeafletMap 
+                setCoordinates={setCoordinates} 
+                setArea={setArea} 
+                initialCoordinates={fieldData.coordinates}
+              />
+            </div>
+            {area && (
+              <div className="area-display">
+                <p>Field Area: {area.toFixed(2)} hectares</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="inputs-column">
+          <div className="form-group">
+            <label>Field Name</label>
+            <input 
+              type="text" 
+              name="name" 
+              value={fieldData.name} 
+              onChange={handleChange} 
+              className="form-control"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Crop Type</label>
+            <input 
+              type="text" 
+              name="crop" 
+              value={fieldData.crop} 
+              onChange={handleChange} 
+              className="form-control"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Location</label>
+            <input 
+              type="text" 
+              name="location" 
+              value={fieldData.location} 
+              onChange={handleChange} 
+              className="form-control"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Planting Date</label>
+            <input 
+              type="date" 
+              name="plantingDate"
+
+              value={fieldData.plantingDate} 
+              onChange={handleChange} 
+              className="form-control"
+              required
+            />
+          </div>
+        </div>
       </div>
       
       <div className="form-actions">

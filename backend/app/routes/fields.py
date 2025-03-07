@@ -77,9 +77,9 @@ def update_field(field_id):
     # Update the field
     cursor.execute('''
         UPDATE fields
-        SET coordinates = ?, name = ?, crop = ?, plantation_date = ?
+        SET coordinates = ?, name = ?, crop = ?, plantation_date = ?, area = ?, location = ?
         WHERE id = ? AND user_email = ?
-    ''', (data['coordinates'], data['name'], data['crop'], data['plantation_date'], field_id, user['email']))
+    ''', (data['coordinates'], data['name'], data['crop'], data['plantation_date'], data['area'], data['location'], field_id, user['email']))
     
     conn.commit()
     conn.close()
