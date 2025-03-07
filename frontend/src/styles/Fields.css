@@ -1,0 +1,343 @@
+/* Fields Component Styles */
+.fields-container {
+    margin-left: 60px; /* Adjust based on your sidebar width when collapsed */
+    transition: margin 0.3s ease;
+    padding: 0 20px;
+  }
+  
+  .section-heading {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+  
+  .section-subheading {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Field Cards */
+  .fields-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
+  }
+  
+  .field-card {
+    display: flex;
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: rgba(100, 100, 111, 0.4) 0px 10px 29px 0px;
+    transition: all 0.3s ease;
+    position: relative;
+    border-left: 5px solid #2980b9;
+  }
+  
+  .field-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .field-card.harvested {
+    border-left-color: #27ae60;
+    background-color: #f8fdf9;
+  }
+  
+  .field-image {
+    width: 200px;
+    height: 100%;
+    position: relative;
+    flex-shrink: 0;
+  }
+  
+  .field-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .harvested-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #27ae60;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  
+  .field-details {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .field-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 15px;
+  }
+  
+  .field-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px 30px;
+    margin-bottom: 20px;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #505a68;
+  }
+  
+  .info-item .icon {
+    color: #3498db;
+    font-size: 1.1rem;
+  }
+  
+  .field-description {
+    grid-column: 1 / -1;
+    color: #7f8c8d;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+  
+  .field-health {
+    margin-top: auto;
+  }
+  
+  .health-bar {
+    height: 8px;
+    background-color: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  
+  .health-level {
+    height: 100%;
+    background-color: #2ecc71;
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+  }
+  
+  .health-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #2ecc71;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .field-actions {
+    width: 200px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+    border-left: 1px solid #e9ecef;
+  }
+  
+  .edit-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .edit-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Custom Checkbox */
+  .harvest-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+    color: #34495e;
+    position: relative;
+    padding-left: 35px;
+  }
+  
+  .harvest-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+  
+  .checkmark {
+    position: absolute;
+    left: 0;
+    height: 22px;
+    width: 22px;
+    background-color: #fff;
+    border: 2px solid #bdc3c7;
+    border-radius: 4px;
+  }
+  
+  .harvest-checkbox:hover input ~ .checkmark {
+    background-color: #f7f9fa;
+  }
+  
+  .harvest-checkbox input:checked ~ .checkmark {
+    background-color: #27ae60;
+    border-color: #27ae60;
+  }
+  
+  .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+  }
+  
+  .harvest-checkbox input:checked ~ .checkmark:after {
+    display: block;
+  }
+  
+  .harvest-checkbox .checkmark:after {
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  
+  /* Edit Form Styles */
+  .field-edit-form {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px 10px;
+  }
+  
+  .field-edit-form h2 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    text-align: center;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #34495e;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dce0e3;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+  
+  .form-control:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+  }
+  
+  .secondary-btn {
+    background-color: #ecf0f1;
+    color: #34495e;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .secondary-btn:hover {
+    background-color: #dce0e3;
+  }
+  
+  .primary-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .primary-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Responsive */
+  @media (max-width: 992px) {
+    .field-card {
+      flex-direction: column;
+    }
+    
+    .field-image, .field-actions {
+      width: 100%;
+    }
+    
+    .field-image {
+      height: 250px;
+    }
+    
+    .field-actions {
+      border-left: none;
+      border-top: 1px solid #e9ecef;
+      flex-direction: row;
+      align-items: center;
+    }
+    
+    .field-info {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .fields-container {
+      margin-left: 0;
+    }
+  }

@@ -34,7 +34,10 @@ def init_db():
             name TEXT NOT NULL UNIQUE,
             coordinates TEXT NOT NULL,  -- Store as JSON string
             crop TEXT NOT NULL,
+            harvest INTEGER DEFAULT 0,
             plantation_date TEXT NOT NULL,  -- Store as ISO date string,
+            area REAL NOT NULL,  -- In hectares
+            location TEXT,
             latest_uav_observation_date TEXT,
             latest_satellite_obeservation_date TEXT,  -- Store as ISO date string
             FOREIGN KEY(user_email) REFERENCES users(email) ON DELETE CASCADE
@@ -74,8 +77,8 @@ def init_db():
             field_id INTEGER NOT NULL,
             observation_date TEXT NOT NULL,  -- ISO date string for the observation date
             phenological_stages TEXT NOT NULL,  -- JSON array string storing detailed phenological stages
-            uav_image TEXT,
-            uav_overlay TEXT,
+            sat_image TEXT,
+            sat_overlay TEXT,
             FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
         )
     ''')

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "../styles/PhenologyData.css";
-import * as turf from "@turf/turf";
 
 // Function to parse coordinates and calculate area using Turf.js
 function parseLatLngString(str) {
@@ -14,22 +13,6 @@ function parseLatLngString(str) {
     });
 }
 
-// Function to calculate area from polygon coordinates using Turf.js
-function calculateAreaFromLatLng(coords) {
-  if (coords.length < 3) return 0;
-
-  // Ensure the polygon is closed by adding the first point to the end
-  const closedCoords = [...coords, coords[0]]; // Close the polygon
-
-  // Convert the coordinates to a polygon object using Turf.js
-  const polygon = turf.polygon([closedCoords]);
-
-  // Calculate the area in square meters using Turf.js (returns area in square meters)
-  const areaInSquareMeters = turf.area(polygon);
-
-  // Convert square meters to acres (1 acre = 4046.86 square meters)
-  return areaInSquareMeters / 4046.86;
-}
 
 
 function getDayOfYear(dateString) {
@@ -55,9 +38,9 @@ const PhenologyData = ({ selectedField }) => {
     plantationDate: "",
     latestPhenologyStage: "",
     latestObservationDate: "",
+    area: "",
   });
 
-  const [acres, setAcres] = useState(0);
   const [dayOfYear, setDayOfYear] = useState(0);
   const [scheduled, setScheduled] = useState(0);
   const [phenStage, setPhenStage] = useState(null);
@@ -68,16 +51,16 @@ const PhenologyData = ({ selectedField }) => {
       cropName: selectedField.name || "",
       plantationDate: selectedField.plantation_date || "",
       coordinates: selectedField.coordinates || "",
+      cropType: selectedField.crop || "",
       latestPhenologyStage: selectedField.latest_phenology_stage || "",
       latestObservationDate: selectedField.latest_observation_date || "",
-      cropType: selectedField.crop || "",
+      area: selectedField.area || "",
     };
   
     setCropData(updatedData);
   
     const coords = parseLatLngString(updatedData.coordinates);
-    const area = calculateAreaFromLatLng(coords);
-    setAcres(area);
+
   
     const doy = getDayOfYear(updatedData.plantationDate);
     setDayOfYear(doy);
@@ -112,26 +95,8 @@ const PhenologyData = ({ selectedField }) => {
           <h5 className="fw-bold text-success">{dayOfYear}</h5>
         </div>
         <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>No. of Acres</i></h5>
-          <h5 className="fw-bold text-success">{acres.toFixed(2)}</h5>
-        </div>
-      </div>
-
-      <div className="d-flex justify-content-center mb-3">
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>Flight Status</i></h5>
-          <h5 className="fw-bold text-success">{scheduled ? 'Scheduled' : 'On Request'}</h5>
-        </div>
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>Latest Phenology Date</i></h5>
-          <h5 className="fw-bold text-success">{cropData.latestPhenologyDate}</h5>
-        </div>
-      </div>
-
-      <div className="d-flex justify-content-center mb-3">
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>Latest Observation Date</i></h5>
-          <h5 className="fw-bold text-success">{cropData.latestObservationDate}</h5>
+          <h5 className="fw-normal"><i>No. of Hectares</i></h5>
+          <h5 className="fw-bold text-success">{cropData.area}</h5>
         </div>
       </div>
     </div>

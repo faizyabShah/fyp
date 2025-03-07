@@ -315,7 +315,7 @@ input:checked + .slider:before {
 /* Tab navigation styles */
 .tabs-container {
     display: flex;
-    /* justify-content: flex-start; */
+    justify-content: center;
     gap: 1rem;
     border-bottom: 1px solid var(--main);
     /* border-radius: 10px; */

@@ -44,7 +44,12 @@ const GeocoderControl = () => {
   return null;
 };
 
-const LeafletMap = ({ setCoordinates }) => {
+// Function to calculate the area of a polygon in square meters
+const calculatePolygonArea = (latlngs) => {
+  return L.GeometryUtil.geodesicArea(latlngs[0]);
+};
+
+const LeafletMap = ({ setCoordinates, setArea }) => {
   const [polygon, setPolygon] = useState(null);
 
   // Custom hook to add drawing functionality
@@ -52,6 +57,28 @@ const LeafletMap = ({ setCoordinates }) => {
     const map = useMap();
 
     useEffect(() => {
+      // Make sure GeometryUtil is available
+      if (!L.GeometryUtil) {
+        // Add Leaflet.GeometryUtil plugin if not already included
+        L.GeometryUtil = {
+          geodesicArea: function(latLngs) {
+            let area = 0;
+            let d2r = Math.PI / 180;
+            let points = latLngs;
+            
+            for (let i = 0, len = points.length; i < len; i++) {
+              let p1 = points[i];
+              let p2 = points[(i + 1) % len];
+              
+              area += ((p2.lng - p1.lng) * d2r) * 
+                     (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+            }
+            area = area * 6378137.0 * 6378137.0 / 2.0;
+            return Math.abs(area);
+          }
+        };
+      }
+
       const drawnItems = new L.FeatureGroup();
       map.addLayer(drawnItems);
 
@@ -73,9 +100,44 @@ const LeafletMap = ({ setCoordinates }) => {
         const layer = e.layer;
         drawnItems.addLayer(layer);
         const latlngs = layer.getLatLngs();
-        console.log(latlngs);
+        
+        // Calculate area in square meters
+        const areaSqMeters = calculatePolygonArea(latlngs);
+        
+        // Convert to hectares (1 hectare = 10,000 square meters)
+        const areaHectares = areaSqMeters / 10000;
+        
+        console.log('Polygon area:', areaHectares.toFixed(2), 'hectares');
+        
         setPolygon(latlngs);
         setCoordinates(latlngs);
+        
+        // Pass the area back to the parent component
+        if (setArea) {
+          setArea(areaHectares);
+        }
+      });
+
+      // Also handle edit events to recalculate area
+      map.on('draw:edited', (e) => {
+        const layers = e.layers;
+        layers.eachLayer((layer) => {
+          const latlngs = layer.getLatLngs();
+          
+          // Recalculate area
+          const areaSqMeters = calculatePolygonArea(latlngs);
+          const areaHectares = areaSqMeters / 10000;
+          
+          console.log('Updated polygon area:', areaHectares.toFixed(2), 'hectares');
+          
+          setPolygon(latlngs);
+          setCoordinates(latlngs);
+          
+          // Pass the updated area back to the parent component
+          if (setArea) {
+            setArea(areaHectares);
+          }
+        });
       });
 
       return () => {
@@ -87,18 +149,12 @@ const LeafletMap = ({ setCoordinates }) => {
   };
 
   return (
-    <MapContainer
-      center={[51.505, -0.09]}
-      zoom={13}
-      style={{ width: '100%', height: '300px' }}
-    >
+    <MapContainer center={[20, 0]} zoom={2} style={{ maxHeight: '300px', width: '100%' }}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      {/* Geocoder control with conditional zoom */}
       <GeocoderControl />
-      {/* Drawing functionality */}
       <MapInteraction />
     </MapContainer>
   );
