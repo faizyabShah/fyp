@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler, FaTrash } from 'react-icons/fa';
 import { RiPlantFill } from 'react-icons/ri';
 import Modal from '../components/Modal';
 import AddFieldForm from '../components/AddFieldForm';
@@ -120,7 +120,6 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
             <input 
               type="date" 
               name="plantingDate"
-
               value={fieldData.plantingDate} 
               onChange={handleChange} 
               className="form-control"
@@ -145,11 +144,11 @@ const Fields = ({ token }) => {
   const [currentField, setCurrentField] = useState(null);
   const [showAddFieldForm, setShowAddFieldForm] = useState(false);
   const [userFieldData, setUserFieldData] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [fieldToDelete, setFieldToDelete] = useState(null);
 
   const navigate = useNavigate();
 
-
-  // const closeModal = () => setShowModal(false);
   const toggleAddFieldForm = () => setShowAddFieldForm(true);
   const closeForm = () => setShowAddFieldForm(false);
 
@@ -190,6 +189,38 @@ const Fields = ({ token }) => {
     setCurrentField(null);
   };
 
+  const handleDeleteClick = (field) => {
+    setFieldToDelete(field);
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    setFieldToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!fieldToDelete) return;
+    
+    try {
+      const response = await fetch(`http://localhost:5000/fields/${fieldToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        fetchFields(); // Refresh fields after deletion
+        closeDeleteConfirm();
+      } else {
+        console.error('Failed to delete field');
+      }
+    } catch (error) {
+      console.error('Error deleting field:', error);
+    }
+  };
+
   const toggleHarvested = async (fieldId, isHarvested) => {
     try {
       const response = await fetch(`http://localhost:5000/fields/${fieldId}`, {
@@ -210,6 +241,20 @@ const Fields = ({ token }) => {
       console.error('Error updating harvest status:', error);
     }
   };
+
+  // Delete confirmation modal component
+  const DeleteConfirmModal = () => (
+    <Modal showModal={showDeleteConfirm} onClose={closeDeleteConfirm}>
+      <div className="delete-confirm-modal">
+        <h3>Delete Field</h3>
+        <p>Are you sure you want to delete the field "{fieldToDelete?.name}"? This action cannot be undone.</p>
+        <div className="modal-actions">
+          <button className="secondary-btn" onClick={closeDeleteConfirm}>Cancel</button>
+          <button className="delete-btn" onClick={confirmDelete}>Delete Field</button>
+        </div>
+      </div>
+    </Modal>
+  );
 
   return (
     <div className="fields-container pt-5" id="Fields">
@@ -301,6 +346,13 @@ const Fields = ({ token }) => {
                     <FaEdit /> Edit
                   </button>
                   
+                  <button 
+                    className="delete-btn" 
+                    onClick={() => handleDeleteClick(field)}
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                  
                   <label className="harvest-checkbox">
                     <input 
                       type="checkbox" 
@@ -312,22 +364,21 @@ const Fields = ({ token }) => {
                   </label>
                 </div>
               </div>
-              
             ))}
           </div>
         )}
       </div>
       <div className="col-md-12 p-5">
-            <div className="no-field box-cont d-flex flex-column align-items-center gap-4">
-              <button className="primary-btn" onClick={() => toggleAddFieldForm()}>Add Another Field</button>
-            </div>
-          </div>
+        <div className="no-field box-cont d-flex flex-column align-items-center gap-4">
+          <button className="primary-btn" onClick={() => toggleAddFieldForm()}>Add Another Field</button>
+        </div>
+      </div>
     
-        {showAddFieldForm && (
-            <Modal showModal={showAddFieldForm} onClose={closeForm}>
-                <AddFieldForm token={token} setUserFieldData={setUserFieldData} navigate={navigate} />
-            </Modal>
-        )}
+      {showAddFieldForm && (
+        <Modal showModal={showAddFieldForm} onClose={closeForm}>
+          <AddFieldForm token={token} setUserFieldData={setUserFieldData} navigate={navigate} />
+        </Modal>
+      )}
 
       {showModal && currentField && (
         <Modal showModal={showModal} onClose={closeModal}>
@@ -339,6 +390,8 @@ const Fields = ({ token }) => {
           />
         </Modal>
       )}
+      
+      {showDeleteConfirm && fieldToDelete && <DeleteConfirmModal />}
       
     </div>
   );
