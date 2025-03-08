@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.database import get_db_connection
 from app.middleware.auth_middleware import authenticate_request
+from app.utils import fetch_sentinel_imagery
+import re
 
 fields_bp = Blueprint('fields', __name__)
 
@@ -21,7 +23,23 @@ def add_field():
     cursor.execute('INSERT INTO fields (user_email, name, coordinates, crop, plantation_date, area, location) VALUES (?, ?, ?, ?, ?, ?, ?)',
                    (user['email'], data['name'], data['coordinates'], data['crop'], data['plantation_date'], data['area'], data['location']))
     conn.commit()
+
+    coordinates_str = data['coordinates']
+    coordinate_pattern = r"LatLng\(([-+]?\d*\.\d+|\d+),\s*([-\+]?\d*\.\d+|\d+)\)"
+    
+    # Find all lat, lon pairs in the string
+    matches = re.findall(coordinate_pattern, coordinates_str)
+    if not matches:
+        return jsonify({'error': 'Invalid coordinates format'}), 400
+    
+    coordinates = [(float(lat), float(lon)) for lat, lon in matches]
+    imagery_result = fetch_sentinel_imagery(coordinates, data['name'])
+
     conn.close()
+
+    if 'error' in imagery_result:
+        return jsonify({'error': imagery_result['error']}), 500
+    
     return jsonify({'message': 'Field added successfully'}), 201
 
 @fields_bp.route('/fields', methods=['GET'])

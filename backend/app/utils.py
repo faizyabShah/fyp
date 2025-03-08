@@ -1,11 +1,15 @@
-from flask import Flask, request, jsonify, send_file
 from sentinelhub import SHConfig, SentinelHubRequest, CRS, BBox
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from datetime import datetime, timedelta
 import os
 import numpy as np
 from PIL import Image
-
-app = Flask(__name__)
+from app.config import Config
+import rasterio
+from rasterio.enums import Resampling
+from rasterio.transform import from_origin
 
 # Configure Sentinel Hub credentials
 config = SHConfig()
@@ -13,8 +17,10 @@ config.instance_id = 'b9daf03a-30ee-4e86-a566-c2348cc78bf5'
 config.sh_client_id = '2a8d049e-8c7a-4677-893f-fbbf5581e6c1'
 config.sh_client_secret = 'KjCxs153Bg5ae8FSWFaexv3hNgtUxMLn'
 
+configuration = Config()
+
 # Ensure the data folder exists.
-DATA_FOLDER = "data"
+DATA_FOLDER = configuration.BASE_DIR
 os.makedirs(DATA_FOLDER, exist_ok=True)
 
 # Evalscript to retrieve all Sentinel-2A (L2A) bands.
@@ -36,13 +42,7 @@ function evaluatePixel(sample) {
 }
 """
 
-@app.route('/fetch-sentinel2a', methods=['POST'])
-def fetch_sentinel2a():
-    data = request.get_json()
-    polygon_coords = data.get('polygon')
-    if not polygon_coords:
-        return jsonify({"error": "Missing polygon coordinates"}), 400
-
+def fetch_sentinel_imagery(polygon_coords, name):
     # Compute bounding box from the polygon coordinates (assumes [lon, lat] points)
     lons = [pt[0] for pt in polygon_coords]
     lats = [pt[1] for pt in polygon_coords]
@@ -77,30 +77,50 @@ def fetch_sentinel2a():
         # Save the data to the folder using the 'data_folder' argument in get_data
         file_paths = request_instance.get_data(save_data=True)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return {"error": str(e)}
 
     if file_paths and len(file_paths) > 0:
         image_data = file_paths[0]  # Image data (array or file path)
 
         if isinstance(image_data, np.ndarray):  # If it's a NumPy array, save it to a file
-            # Select the first 3 bands for a true-color image (e.g., B04, B03, B02)
-            true_color_image = image_data[..., [3, 2, 1]]  # B04, B03, B02 (RGB)
+            # All bands (12 bands from Sentinel-2 data)
+            all_bands_image = image_data  # This is a 3D numpy array with dimensions (height, width, bands)
 
-            # Normalize the array to 8-bit (0-255)
-            true_color_image = np.clip(true_color_image, 0, 1) * 255
-            true_color_image = true_color_image.astype(np.uint8)
+            # Normalize the image bands (for visualization or storage as needed)
+            # all_bands_image = np.clip(all_bands_image, 0, 1) * 255
+            # all_bands_image = all_bands_image.astype(np.uint8)
 
-            # Save to a .tiff file
-            image_path = os.path.join(DATA_FOLDER, "sentinel2a.tiff")
-            image = Image.fromarray(true_color_image)
-            image.save(image_path)
+            # Create a directory for saving the image
+            directory_path = os.path.join(DATA_FOLDER, name)
+            os.makedirs(directory_path, exist_ok=True)
+
+            # Save as a multi-band GeoTIFF
+            image_path = os.path.join(directory_path, "sentinel2a_all_bands.tiff")
+            print(image_path)  # This will print the correct path
+
+            # Use rasterio to save the multi-band image
+            with rasterio.open(
+                image_path, 'w', driver='GTiff', count=12, width=all_bands_image.shape[1], height=all_bands_image.shape[0],
+                dtype=all_bands_image.dtype, crs='EPSG:4326', transform=from_origin(minx, maxy, 10, 10)  # 10m resolution
+            ) as dst:
+                for i in range(12):
+                    dst.write(all_bands_image[:, :, i], i + 1)  # Write each band
+
         else:  # If it's already a file path, use it directly
             image_path = image_data
 
-        # Return the image as a downloadable TIFF file
-        return send_file(image_path, mimetype='image/tiff', as_attachment=True, download_name='sentinel2a.tiff')
+        return image_path
     else:
-        return jsonify({"error": "No imagery data returned"}), 500
+        return {"error": "No imagery data returned"}
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+if __name__ == "__main__":
+    polygon_coords = [
+    (73.12909175951619, 33.67065952960747),
+    (73.13121484881526, 33.67117740695046),
+    (73.13157941970498, 33.670105933137286),
+    (73.12945633040593, 33.66960590745638)
+    ]
+
+    image_path = fetch_sentinel_imagery(polygon_coords, "My_Field")
+    print("Saved image path:", image_path)

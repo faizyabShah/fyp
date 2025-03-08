@@ -49,10 +49,10 @@ const calculatePolygonArea = (latlngs) => {
   return L.GeometryUtil.geodesicArea(latlngs[0]);
 };
 
-const LeafletMap = ({ setCoordinates, setArea, initialCoordinates }) => {
+const LeafletMap = ({ setCoordinates, setArea }) => {
   const [polygon, setPolygon] = useState(null);
 
-  // Custom hook to add drawing functionality and initialize existing polygon
+  // Custom hook to add drawing functionality
   const MapInteraction = () => {
     const map = useMap();
 
@@ -82,38 +82,6 @@ const LeafletMap = ({ setCoordinates, setArea, initialCoordinates }) => {
       const drawnItems = new L.FeatureGroup();
       map.addLayer(drawnItems);
 
-      // If we have initial coordinates, draw the polygon
-      if (initialCoordinates) {
-        try {
-          // Parse the coordinates string if it's a string
-          let coordsData;
-          if (typeof initialCoordinates === 'string') {
-            coordsData = JSON.parse(initialCoordinates);
-          } else {
-            coordsData = initialCoordinates;
-          }
-          
-          // Create a polygon and add it to the map
-          const initialPolygon = L.polygon(coordsData);
-          drawnItems.addLayer(initialPolygon);
-          
-          // Calculate its area
-          const latlngs = initialPolygon.getLatLngs();
-          const areaSqMeters = calculatePolygonArea(latlngs);
-          const areaHectares = areaSqMeters / 10000;
-          
-          // Set the area in the state
-          if (setArea) {
-            setArea(areaHectares);
-          }
-          
-          // Fit the map to the polygon bounds
-          map.fitBounds(initialPolygon.getBounds());
-        } catch (error) {
-          console.error('Error parsing initial coordinates:', error);
-        }
-      }
-
       const drawControl = new L.Control.Draw({
         edit: {
           featureGroup: drawnItems,
@@ -129,9 +97,6 @@ const LeafletMap = ({ setCoordinates, setArea, initialCoordinates }) => {
       map.addControl(drawControl);
 
       map.on('draw:created', (e) => {
-        // Clear any existing polygons
-        drawnItems.clearLayers();
-        
         const layer = e.layer;
         drawnItems.addLayer(layer);
         const latlngs = layer.getLatLngs();
@@ -178,13 +143,13 @@ const LeafletMap = ({ setCoordinates, setArea, initialCoordinates }) => {
       return () => {
         map.removeControl(drawControl);
       };
-    }, [map, initialCoordinates]);
+    }, [map]);
 
     return null;
   };
 
   return (
-    <MapContainer center={[20, 0]} zoom={2} style={{ height: '400px', width: '100%' }}>
+    <MapContainer center={[20, 0]} zoom={2} style={{ maxHeight: '300px', width: '100%' }}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

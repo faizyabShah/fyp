@@ -93,12 +93,13 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px 30px;
-    margin-bottom: 20px;
+    margin-bottom: 20px;  
   }
   
   .info-item {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 8px;
     color: #505a68;
   }
@@ -477,4 +478,9 @@
   .field-edit-form .map-container {
     height: 300px;
   }
+}
+
+.headddd {
+  font-size: 1.5rem;
+  color: black;
 }

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import "../styles/PhenologyData.css";
+import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler } from 'react-icons/fa';
+import { PiFarmFill } from "react-icons/pi";
+import { FaCalendarDay } from "react-icons/fa6";
+import { RiPlantFill } from 'react-icons/ri';
 
 // Function to parse coordinates and calculate area using Turf.js
 function parseLatLngString(str) {
@@ -79,24 +83,35 @@ const PhenologyData = ({ selectedField }) => {
       </div>
 
       <div className="d-flex justify-content-center mb-3">
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>Crop Type</i></h5>
-          <h5 className="fw-bold text-success">{cropData.cropType}</h5>
-        </div>
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>Crop Name</i></h5>
-          <h5 className="fw-bold text-success">{cropData.cropName}</h5>
+        <div className="field-info">
+          <div className="info-item">
+            <PiFarmFill className="icon-big" />
+            <span className="headddd">{cropData.cropName || 'Not specified'}</span>
+          </div>
         </div>
       </div>
 
       <div className="d-flex justify-content-center mb-3">
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>Day of Year</i></h5>
-          <h5 className="fw-bold text-success">{dayOfYear}</h5>
+        <div className="field-info">
+          <div className="info-item">
+            <FaRuler className="icon" />
+            <span>{cropData.area || '0'} hectares</span>
+          </div>
         </div>
-        <div className="w-50 text-center">
-          <h5 className="fw-normal"><i>No. of Hectares</i></h5>
-          <h5 className="fw-bold text-success">{cropData.area}</h5>
+        <div className="field-info">
+            <div className="info-item">
+            <RiPlantFill className="icon" />
+            <span>{cropData.cropType || 'Not specified'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="d-flex justify-content-center mb-3">
+      <div className="field-info">
+            <div className="info-item">
+            <FaCalendarDay  className="icon" />
+            <span>Day of Year {dayOfYear}</span>
+          </div>
         </div>
       </div>
     </div>

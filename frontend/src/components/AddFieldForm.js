@@ -14,6 +14,10 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
 
     const closeError = () => setError(null);
 
+    const consolee = () => {
+        console.log(coordinates);
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -123,6 +127,8 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
                                 required 
                             />
                         </div>
+                        
+                        <button onClick={consolee}>Test</button>
                         
                         <button type="submit" className="primary-btn">Add Field</button>
                     </div>
