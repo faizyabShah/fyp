@@ -23,8 +23,8 @@ def add_request():
     if not field:
         return jsonify({'error': 'Field not found or unauthorized'}), 403
 
-    cursor.execute('INSERT INTO requests (user_email, field_id, requested_date, status, date_for_flight) VALUES (?, ?, datetime("now"), ?, ?)',
-                   (user['email'], data['field_id'], 'pending', data['date_for_flight']))
+    cursor.execute('INSERT INTO requests (user_email, field_id, requested_date, status, date_for_flight, notes) VALUES (?, ?, datetime("now"), ?, ?, ?)',
+                   (user['email'], data['field_id'], 'pending', data['date_for_flight'], data['notes']))
     conn.commit()
     conn.close()
     return jsonify({'message': 'Request created'}), 201

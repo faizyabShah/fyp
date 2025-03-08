@@ -51,6 +51,7 @@ def init_db():
             user_email TEXT NOT NULL,
             field_id INTEGER NOT NULL,
             requested_date TEXT NOT NULL, -- Store as ISO date string
+            notes TEXT,
             status TEXT CHECK( status IN ('pending', 'approved', 'rejected') ) DEFAULT 'pending',
             date_for_flight TEXT NOT NULL, -- Date for flight as ISO date string
             FOREIGN KEY(user_email) REFERENCES users(email) ON DELETE CASCADE,

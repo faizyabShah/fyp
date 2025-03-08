@@ -11,6 +11,7 @@ import LoadingScreen from '../components/LoadingScreen';
 import Sidebar from '../components/Sidebar';
 import Stats from './Stats'; // Import the new DashboardContent component
 import Fields from './Fields';
+import Requests from './Requests';
 
 const Dashboard = () => {
   const { isAuthenticated, token } = useAuth();
@@ -111,7 +112,7 @@ const Dashboard = () => {
         ) : currentPage === 'fields' ? (
           <Fields token={token}/>
         ) : currentPage === 'requests' && (
-          <h1>Requests</h1>
+          <Requests token={token}/>
         )
       )}
 

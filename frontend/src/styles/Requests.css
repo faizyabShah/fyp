@@ -1,7 +1,345 @@
-.requests {
+/* Requests Component Styles */
+.requests-container {
+    margin-left: 60px; /* Adjust based on your sidebar width when collapsed */
+    transition: margin 0.3s ease;
+    padding: 0 20px;
+  }
+  
+  .section-heading {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+  
+  .section-subheading {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Add Request Button */
+  .add-request-btn {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 20px;
+  }
+  
+  .add-request-btn:hover {
+    background-color: #27ae60;
+  }
+  
+  /* Request Cards */
+  .requests-list {
     display: flex;
     flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
+  }
+  
+  .request-card {
+    display: flex;
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 20px 0px;
+    transition: all 0.3s ease;
+    position: relative;
+    border-left: 5px solid #3498db;
+  }
+  
+  .request-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Style based on status */
+  .request-card[data-status="approved"] {
+    border-left-color: #2ecc71;
+  }
+  
+  .request-card[data-status="rejected"] {
+    border-left-color: #e74c3c;
+  }
+  
+  .request-card[data-status="pending"] {
+    border-left-color: #f39c12;
+  }
+  
+  .request-details {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .field-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+  }
+  
+  /* Status Badge */
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  .status-badge-approved {
+    background-color: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+  }
+  
+  .status-badge-rejected {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+  }
+  
+  .status-badge-pending {
+    background-color: rgba(243, 156, 18, 0.15);
+    color: #f39c12;
+  }
+  
+  .request-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #505a68;
+  }
+  
+  .info-item .icon {
+    color: #3498db;
+    font-size: 1.1rem;
+  }
+  
+  .request-notes {
+    background-color: #f8f9fa;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  
+  .request-notes h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 5px;
+  }
+  
+  .request-notes p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+  
+  .request-actions {
+    width: 200px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+    border-left: 1px solid #e9ecef;
+  }
+  
+  /* Delete/Cancel Button */
+  .delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 20px;
-}
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .delete-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  /* Delete Confirmation Modal */
+  .delete-confirm-modal {
+    padding: 20px;
+    max-width: 400px;
+  }
+  
+  .delete-confirm-modal h3 {
+    color: #e74c3c;
+    margin-bottom: 15px;
+  }
+  
+  .delete-confirm-modal p {
+    margin-bottom: 20px;
+    color: #34495e;
+  }
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  /* Add Request Form */
+  .request-form {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+  }
+  
+  .request-form h2 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    text-align: center;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #34495e;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dce0e3;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+  
+  .form-control:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+  
+  textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+  }
+  
+  .secondary-btn {
+    background-color: #ecf0f1;
+    color: #34495e;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .secondary-btn:hover {
+    background-color: #dce0e3;
+  }
+  
+  .primary-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .primary-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  /* No Requests State */
+  .no-requests {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  
+  .no-requests h3 {
+    color: #7f8c8d;
+    font-weight: 400;
+    margin-bottom: 20px;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 992px) {
+    .request-card {
+      flex-direction: column;
+    }
+    
+    .request-actions {
+      width: 100%;
+      border-left: none;
+      border-top: 1px solid #e9ecef;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    
+    .request-info {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .requests-container {
+      margin-left: 0;
+    }
+    
+    .request-info {
+      grid-template-columns: 1fr;
+    }
+    
+    .request-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+  }
