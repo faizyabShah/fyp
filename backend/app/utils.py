@@ -1,7 +1,6 @@
 from sentinelhub import DataCollection, SHConfig, SentinelHubRequest, CRS, BBox
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from datetime import datetime, timedelta
 import os
 import numpy as np
@@ -111,13 +110,3 @@ def fetch_sentinel_imagery(polygon_coords, name):
         return {"error": "No imagery data returned"}
 
 
-if __name__ == "__main__":
-    polygon_coords = [
-    (73.12909175951619, 33.67065952960747),
-    (73.13121484881526, 33.67117740695046),
-    (73.13157941970498, 33.670105933137286),
-    (73.12945633040593, 33.66960590745638)
-    ]
-
-    image_path = fetch_sentinel_imagery(polygon_coords, "My_Field")
-    print("Saved image path:", image_path)
