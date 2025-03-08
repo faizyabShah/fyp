@@ -256,12 +256,6 @@ const Requests = ({ token }) => {
           <p className="section-subheading">Schedule and manage your field inspection requests</p>
         </div>
         
-        <div className="col-md-12 px-5 pt-4">
-          <button className="add-request-btn" onClick={toggleAddForm}>
-            <FaPlus /> New Request
-          </button>
-        </div>
-        
         {loading ? (
           <div className="col-md-12 text-center py-5">
             <div className="spinner-border text-primary" role="status">
@@ -278,18 +272,19 @@ const Requests = ({ token }) => {
         ) : (
           <div className="requests-list py-4">
             {requests.map((request) => (
+                <>
               <div key={request.id} className="request-card">
                 <div className="request-details">
                   <div className="request-header">
-                    <h3 className="field-name">{getFieldName(request.fieldid)}</h3>
+                    <h3 className="field-name">{getFieldName(request.field_id)}</h3>
                     <StatusBadge status={request.status} />
                   </div>
                   
                   <div className="request-info">
-                    <div className="info-item">
+                    {/* <div className="info-item">
                       <RiPlantFill className="icon" />
-                      <span>Field ID: {request.fieldid}</span>
-                    </div>
+                      <span>Field ID: {request.field_id}</span>
+                    </div> */}
                     
                     <div className="info-item">
                       <FaCalendarAlt className="icon" />
@@ -321,6 +316,12 @@ const Requests = ({ token }) => {
                   )}
                 </div>
               </div>
+              <div className="col-md-12">
+                <div className="no-requests box-cont d-flex justify-content-center flex-column align-items-center gap-4">
+                <button className="primary-btn" onClick={toggleAddForm}>Request Another Drone Flight</button>
+                </div>
+            </div>
+              </>
             ))}
           </div>
         )}
