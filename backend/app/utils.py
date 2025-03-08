@@ -1,4 +1,4 @@
-from sentinelhub import SHConfig, SentinelHubRequest, CRS, BBox
+from sentinelhub import DataCollection, SHConfig, SentinelHubRequest, CRS, BBox
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -51,19 +51,21 @@ def fetch_sentinel_imagery(polygon_coords, name):
 
     # Define a time range (e.g., the past 30 days)
     end_date = datetime.today()
-    start_date = end_date - timedelta(days=30)
+    start_date = end_date - timedelta(days=5)
+    end_date_str = end_date.strftime('%d-%m-%y')
 
     # Create the Sentinel Hub request for Sentinel-2A L2A data.
     request_instance = SentinelHubRequest(
         evalscript=EVALSCRIPT,
-        input_data=[{
-            "type": "sentinel-2-l2a",
-            "dataCollection": "S2L2A",
-            "timeRange": {
-                "from": start_date.strftime('%Y-%m-%d'),
-                "to": end_date.strftime('%Y-%m-%d')
-            }
-        }],
+        input_data=[
+            SentinelHubRequest.input_data(
+                data_collection=DataCollection.SENTINEL2_L2A,
+                time_interval=(start_date, end_date),
+                maxcc=0.3,  # Maximum cloud coverage    
+                mosaicking_order="leastCC"
+            )
+        ],
+
         responses=[{
             "identifier": "default",
             "format": {"type": "image/tiff"}  # Correct format
@@ -83,19 +85,14 @@ def fetch_sentinel_imagery(polygon_coords, name):
         image_data = file_paths[0]  # Image data (array or file path)
 
         if isinstance(image_data, np.ndarray):  # If it's a NumPy array, save it to a file
-            # All bands (12 bands from Sentinel-2 data)
             all_bands_image = image_data  # This is a 3D numpy array with dimensions (height, width, bands)
 
-            # Normalize the image bands (for visualization or storage as needed)
-            # all_bands_image = np.clip(all_bands_image, 0, 1) * 255
-            # all_bands_image = all_bands_image.astype(np.uint8)
 
-            # Create a directory for saving the image
             directory_path = os.path.join(DATA_FOLDER, name)
             os.makedirs(directory_path, exist_ok=True)
 
             # Save as a multi-band GeoTIFF
-            image_path = os.path.join(directory_path, "sentinel2a_all_bands.tiff")
+            image_path = os.path.join(directory_path, f"{end_date_str}.tiff")
             print(image_path)  # This will print the correct path
 
             # Use rasterio to save the multi-band image
