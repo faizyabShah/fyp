@@ -84,6 +84,15 @@ def init_db():
         )
     ''')
 
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                field_id INTEGER NOT NULL,
+                report_date TEXT NOT NULL,  -- ISO date string for the report date
+                FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
+        )
+    ''')
+
 
     conn.commit()
     conn.close()

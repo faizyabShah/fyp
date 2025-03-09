@@ -3,6 +3,7 @@
     "@turf/turf": "^7.2.0",
     "bootstrap": "^5.3.3",
     "esri-leaflet-geocoder": "^3.1.5",
+    "fs": "^0.0.1-security",
     "leaflet": "^1.9.4",
     "leaflet-control-geocoder": "^3.1.0",
     "leaflet-draw": "^1.0.4",

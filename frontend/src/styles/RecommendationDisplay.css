@@ -1,0 +1,93 @@
+/* recommendation-styles.css */
+
+/* Base styles for the markdown content */
+.markdown-content {
+    font-family: 'Roboto', sans-serif;
+    color: #212529;
+    line-height: 1.7;
+  }
+  
+  /* Card styling with shadow effects */
+  .card-recommendation {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .card-recommendation:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.07);
+  }
+  
+  /* Code formatting */
+  .markdown-content code {
+    font-family: 'Fira Code', monospace;
+  }
+  
+  /* Paragraph styling */
+  .markdown-content p:not(.lead) {
+    margin-bottom: 1rem;
+  }
+  
+  /* Green left border for content under headings */
+  .section-content {
+    border-left: 4px solid #28a745; /* Bootstrap green */
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.2s ease;
+  }
+  
+  /* Add a subtle hover effect to the bordered sections */
+  .section-content:hover {
+    border-left-color: #218838; /* Darker green on hover */
+  }
+  
+  /* Ensure proper spacing between sections */
+  .heading-marker + .section-content {
+    margin-top: 0.5rem;
+  }
+  
+  /* Make sure lists inside the bordered sections look good */
+  .section-content .list-group-item {
+    padding-left: 0;
+    background: transparent;
+  }
+  
+  /* Adjust blockquote styling when inside the section */
+  .section-content blockquote {
+    border-left-width: 0 !important; /* Remove Bootstrap's left border */
+    margin-left: -1rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+  }
+  
+  /* Ensure code blocks have proper spacing */
+  .section-content pre {
+    margin: 0;
+  }
+
+  .h3 {
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  .h1 {
+    font-size: 2rem;
+    font-weight: 500;
+  }
+
+  .h2 {
+    font-size: 1.8rem;
+    font-weight: 500;
+  }
+
+  .li {
+    font-size: 1.1rem;
+    font-weight: 400;
+  }
+
+  .p {
+    font-size: 1.1rem;
+    font-weight: 400;
+  }
+  
+  /* Font imports */
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');

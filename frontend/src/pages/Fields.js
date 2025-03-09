@@ -251,7 +251,7 @@ const HarvestConfirmModal = ({ showModal, onClose, field, onConfirm }) => (
       </p>
       <div className="modal-actions">
         <button className="secondary-btn" onClick={onClose}>Cancel</button>
-        <button className="primary-btn" onClick={onConfirm}>
+        <button className="harvest-btn" onClick={onConfirm}>
           {field?.harvest ? 'Mark as Active' : 'Mark as Harvested'}
         </button>
       </div>

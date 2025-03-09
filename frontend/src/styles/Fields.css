@@ -229,6 +229,8 @@
   transition: background-color 0.2s;
 }
 
+
+
 .delete-btn:hover {
   background-color: #c0392b;
 }
@@ -245,6 +247,21 @@
 }
 
 .delete-confirm-modal p {
+  margin-bottom: 20px;
+  color: #34495e;
+}
+
+.harvest-confirm-modal {
+  padding: 20px;
+  max-width: 400px;
+}
+
+.harvest-confirm-modal h3 {
+  color: #a4ba00;
+  margin-bottom: 15px;
+}
+
+.harvest-confirm-modal p {
   margin-bottom: 20px;
   color: #34495e;
 }

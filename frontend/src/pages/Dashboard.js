@@ -12,11 +12,11 @@ import Sidebar from '../components/Sidebar';
 import Stats from './Stats'; // Import the new DashboardContent component
 import Fields from './Fields';
 import Requests from './Requests';
+import UAV from './Uav';
 
 const Dashboard = () => {
   const { isAuthenticated, token } = useAuth();
   const [fieldImg, setFeildImg] = useState('./media/field.jpg');
-  const [selectedField, setSelectedField] = useState(null);
   const [userName, setUserName] = useState("");
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(true);
@@ -92,31 +92,25 @@ const Dashboard = () => {
             <Stats 
             userName={userName}
             address={address}
-            selectedField={selectedField}
-            setSelectedField={setSelectedField}
-            fieldImg={fieldImg}
-            setFieldImg={setFeildImg}
-            legend={[
-                { color: 'red', text: "Pre-germination" },
-                { color: 'orange', text: "Germination" },
-                { color: 'yellow', text: "Tillering" },
-                { color: 'green', text: "Jointing" },
-                { color: 'blue', text: "Booting" },
-                { color: 'purple', text: "Heading" },
-                { color: 'cyan', text: "Anthesis" },
-                { color: 'magenta', text: "Grain Filling" },
-            ]}
-            getPredictions={getPredictions}
             token={token}
             />
         ) : currentPage === 'active-fields' ? (
           <Fields token={token} viewType='active'/>
         ) : currentPage === 'harvested-fields' ? (
           <Fields token={token} viewType='harvested'/>
-        ) : currentPage === 'requests' && (
+        ) : currentPage === 'requests' ? (
           <Requests token={token}/>
-        )
-      )}
+        ) : currentPage === 'uav-stats' ? (
+          <UAV 
+            userName={userName}
+            address={address}
+            fieldImg={fieldImg}
+            setFieldImg={setFeildImg}
+            getPredictions={getPredictions}
+            token={token}
+          />
+        ) : null)
+      }
 
     </>
   );
