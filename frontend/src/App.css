@@ -2,6 +2,7 @@
   --main : #42330c;
   --secondary : #362901;
   --tertiary: #2a1f00;
+  --fourth: #3a2b0b;
 }
 * {
     max-width: 100vw !important;

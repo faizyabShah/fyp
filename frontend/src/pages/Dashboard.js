@@ -21,7 +21,7 @@ const Dashboard = () => {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [currentPage, setCurrentPage] = useState('stats');
+  const [currentPage, setCurrentPage] = useState('satellite-stats');
   const navigate = useNavigate();
 
   const closeError = () => setErrorMessage(null);
@@ -88,7 +88,7 @@ const Dashboard = () => {
       )}
 
       {!errorMessage && (  
-        currentPage === 'stats' ? (
+        currentPage === 'satellite-stats' ? (
             <Stats 
             userName={userName}
             address={address}
@@ -109,8 +109,10 @@ const Dashboard = () => {
             getPredictions={getPredictions}
             token={token}
             />
-        ) : currentPage === 'fields' ? (
-          <Fields token={token}/>
+        ) : currentPage === 'active-fields' ? (
+          <Fields token={token} viewType='active'/>
+        ) : currentPage === 'harvested-fields' ? (
+          <Fields token={token} viewType='harvested'/>
         ) : currentPage === 'requests' && (
           <Requests token={token}/>
         )

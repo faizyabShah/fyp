@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler, FaTrash } from 'react-icons/fa';
 import { RiPlantFill } from 'react-icons/ri';
 import Modal from '../components/Modal';
 import AddFieldForm from '../components/AddFieldForm';
@@ -7,6 +7,7 @@ import LeafletMap from '../components/LeafletMap';
 import '../styles/Fields.css';
 import { useNavigate } from 'react-router-dom';
 
+// Field Edit Form component - shared by both ActiveFields and HarvestedFields
 const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
   const [fieldData, setFieldData] = useState({
     name: field.name || '',
@@ -137,51 +138,145 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
   );
 };
 
-const Fields = ({ token }) => {
+// FieldCard Component - shared by both ActiveFields and HarvestedFields
+const FieldCard = ({ field, onEdit, onDelete, onToggleHarvest }) => {
+  return (
+    <div className={`field-card ${field.harvest ? 'harvested' : ''}`}>
+      <div className="field-image">
+        <img 
+          src={'https://th-i.thgim.com/public/incoming/3h45oz/article69225994.ece/alternates/LANDSCAPE_1200/2025-02-12T112913Z_1564877728_RC2DU9AAFCNS_RTRMADP_3_CANADA-AGRICULTURE.JPG'} 
+          alt={field.name} 
+          className="img-fluid" 
+        />
+        {field.harvest && (
+          <div className="harvested-badge">
+            <FaCheck /> Harvested
+          </div>
+        )}
+      </div>
+      <div className="field-details">
+        <h3 className="field-name">{field.name}</h3>
+        
+        <div className="field-info">
+          <div className="info-item">
+            <RiPlantFill className="icon" />
+            <span>{field.crop || 'Not specified'}</span>
+          </div>
+          
+          <div className="info-item">
+            <FaRuler className="icon" />
+            <span>{field.area || '0'} hectares</span>
+          </div>
+          
+          <div className="info-item">
+            <FaMapMarkerAlt className="icon" />
+            <span>{field.location || 'Not specified'}</span>
+          </div>
+          
+          <div className="info-item">
+            <FaCalendarAlt className="icon" />
+            <span>{field.plantation_date ? new Date(field.plantation_date).toLocaleDateString() : 'Not specified'}</span>
+          </div>
+          
+          {field.description && (
+            <div className="field-description">
+              <p>{field.description}</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="field-health">
+          <div className="health-bar">
+            <div 
+              className="health-level" 
+              style={{ width: `${field.healthPercent || 85}%` }}
+            ></div>
+          </div>
+          <div className="health-label">
+            <FaLeaf className="icon" />
+            <span>Crop Health: {field.healthPercent || 85}%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="field-actions">
+        <button 
+          className="edit-btn" 
+          onClick={() => onEdit(field)}
+        >
+          <FaEdit /> Edit
+        </button>
+        
+        <button 
+          className="delete-btn" 
+          onClick={() => onDelete(field)}
+        >
+          <FaTrash /> Delete
+        </button>
+        
+        <button 
+          className={`${field.harvest ? 'active-btn' : 'harvest-btn'}`}
+          onClick={() => onToggleHarvest(field)}
+        >
+          <FaCheck /> {field.harvest ? 'Mark as Active' : 'Mark as Harvested'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Delete Confirmation Modal - shared component
+const DeleteConfirmModal = ({ showModal, onClose, fieldName, onConfirm }) => (
+  <Modal showModal={showModal} onClose={onClose}>
+    <div className="delete-confirm-modal">
+      <h3>Delete Field</h3>
+      <p>Are you sure you want to delete the field "{fieldName}"? This action cannot be undone.</p>
+      <div className="modal-actions">
+        <button className="secondary-btn" onClick={onClose}>Cancel</button>
+        <button className="delete-btn" onClick={onConfirm}>Delete Field</button>
+      </div>
+    </div>
+  </Modal>
+);
+
+// Harvest Toggle Confirmation Modal - shared component
+const HarvestConfirmModal = ({ showModal, onClose, field, onConfirm }) => (
+  <Modal showModal={showModal} onClose={onClose}>
+    <div className="harvest-confirm-modal">
+      <h3>{field?.harvest ? 'Mark as Active' : 'Mark as Harvested'}</h3>
+      <p>
+        {field?.harvest 
+          ? `Are you sure you want to mark "${field?.name}" as active again?` 
+          : `Are you sure you want to mark "${field?.name}" as harvested?`}
+      </p>
+      <div className="modal-actions">
+        <button className="secondary-btn" onClick={onClose}>Cancel</button>
+        <button className="primary-btn" onClick={onConfirm}>
+          {field?.harvest ? 'Mark as Active' : 'Mark as Harvested'}
+        </button>
+      </div>
+    </div>
+  </Modal>
+);
+
+// ActiveFields Component - completely separated
+const ActiveFields = ({ token, fetchFields }) => {
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddFieldForm, setShowAddFieldForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [currentField, setCurrentField] = useState(null);
-  const [showAddFieldForm, setShowAddFieldForm] = useState(false);
-  const [userFieldData, setUserFieldData] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [fieldToDelete, setFieldToDelete] = useState(null);
-  const [showHarvestedFields, setShowHarvestedFields] = useState(false);
   const [showHarvestConfirm, setShowHarvestConfirm] = useState(false);
   const [fieldToHarvest, setFieldToHarvest] = useState(null);
-
+  const [userFieldData, setUserFieldData] = useState([]);
+  
   const navigate = useNavigate();
 
   const toggleAddFieldForm = () => setShowAddFieldForm(true);
-  const closeForm = () => setShowAddFieldForm(false);
-
-  const fetchFields = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFields(data);
-      } else {
-        console.error('Failed to fetch fields');
-      }
-    } catch (error) {
-      console.error('Error fetching fields:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFields();
-  }, [token]);
-
+  const closeAddFieldForm = () => setShowAddFieldForm(false);
+  
   const handleEditClick = (field) => {
     setCurrentField(field);
     setShowModal(true);
@@ -258,81 +353,47 @@ const Fields = ({ token }) => {
     }
   };
 
-  // Delete confirmation modal component
-  const DeleteConfirmModal = () => (
-    <Modal showModal={showDeleteConfirm} onClose={closeDeleteConfirm}>
-      <div className="delete-confirm-modal">
-        <h3>Delete Field</h3>
-        <p>Are you sure you want to delete the field "{fieldToDelete?.name}"? This action cannot be undone.</p>
-        <div className="modal-actions">
-          <button className="secondary-btn" onClick={closeDeleteConfirm}>Cancel</button>
-          <button className="delete-btn" onClick={confirmDelete}>Delete Field</button>
-        </div>
-      </div>
-    </Modal>
-  );
+  const fetchActiveFields = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/fields', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-  // Harvest confirmation modal component
-  const HarvestConfirmModal = () => (
-    <Modal showModal={showHarvestConfirm} onClose={closeHarvestConfirm}>
-      <div className="harvest-confirm-modal">
-        <h3>{fieldToHarvest?.harvest ? 'Mark as Active' : 'Mark as Harvested'}</h3>
-        <p>
-          {fieldToHarvest?.harvest 
-            ? `Are you sure you want to mark "${fieldToHarvest?.name}" as active again?` 
-            : `Are you sure you want to mark "${fieldToHarvest?.name}" as harvested?`}
-        </p>
-        <div className="modal-actions">
-          <button className="secondary-btn" onClick={closeHarvestConfirm}>Cancel</button>
-          <button className="primary-btn" onClick={confirmHarvest}>
-            {fieldToHarvest?.harvest ? 'Mark as Active' : 'Mark as Harvested'}
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
+      if (response.ok) {
+        const data = await response.json();
+        // Filter only active fields
+        setFields(data.filter(field => !field.harvest));
+      } else {
+        console.error('Failed to fetch fields');
+      }
+    } catch (error) {
+      console.error('Error fetching fields:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Filter fields based on the toggle state
-  const filteredFields = fields.filter(field => {
-    // If showHarvestedFields is true, show all fields
-    // If showHarvestedFields is false, only show fields that are NOT harvested
-    return showHarvestedFields ? true : !field.harvest;
-  });
-
-  // Count for active (non-harvested) and harvested fields
-  const activeFieldsCount = fields.filter(field => !field.harvest).length;
-  const harvestedFieldsCount = fields.filter(field => field.harvest).length;
+  useEffect(() => {
+    fetchActiveFields();
+  }, [token]);
 
   return (
-    <div className="fields-container pt-5" id="Fields">
+    <div className="active-fields-container">
       <div className="row pad-5">
         <div className="col-md-12 px-5 pt-5 border-bottom border-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h2 className="section-heading">Your Fields</h2>
-              <p className="section-subheading">Manage and monitor all your agricultural plots</p>
-            </div>
-            <div className="harvested-toggle d-flex align-items-center">
-              <span className="me-2">Show harvested fields too</span>
-              <button 
-                className="toggle-btn" 
-                onClick={() => setShowHarvestedFields(!showHarvestedFields)}
-                aria-label={showHarvestedFields ? "Hide harvested fields" : "Show harvested fields"}
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                {showHarvestedFields ? 
-                  <FaToggleOn size={24} className="text-success" /> : 
-                  <FaToggleOff size={24} className="text-secondary" />
-                }
-              </button>
+              <h2 className="section-heading">Active Fields</h2>
+              <p className="section-subheading">Manage your currently growing crops</p>
             </div>
           </div>
           {fields.length > 0 && (
             <div className="field-counts text-muted mb-3">
-              <span>Showing: {showHarvestedFields ? fields.length : activeFieldsCount} fields</span>
-              {harvestedFieldsCount > 0 && !showHarvestedFields && (
-                <span className="ms-2">({harvestedFieldsCount} harvested fields hidden)</span>
-              )}
+              <span>Showing: {fields.length} active fields</span>
             </div>
           )}
         </div>
@@ -343,117 +404,34 @@ const Fields = ({ token }) => {
               <span className="visually-hidden">Loading...</span>
             </div>
           </div>
-        ) : filteredFields.length === 0 ? (
+        ) : fields.length === 0 ? (
           <div className="col-md-12 p-5">
             <div className="no-field box-cont d-flex justify-content-center flex-column align-items-center gap-4">
-              <h3 className="text-grey">
-                {fields.length === 0 
-                  ? "You don't have any fields yet" 
-                  : "All your fields are harvested. Toggle to show harvested fields."}
-              </h3>
-              <button className="primary-btn" onClick={() => toggleAddFieldForm()}>Add New Field</button>
+              <h3 className="text-grey">You don't have any active fields yet</h3>
+              <button className="primary-btn" onClick={toggleAddFieldForm}>Add New Field</button>
             </div>
           </div>
         ) : (
           <div className="fields-list py-4">
-            {filteredFields.map((field) => (
-              <div key={field._id} className={`field-card ${field.harvest ? 'harvested' : ''}`}>
-                <div className="field-image">
-                  <img 
-                    src={'https://th-i.thgim.com/public/incoming/3h45oz/article69225994.ece/alternates/LANDSCAPE_1200/2025-02-12T112913Z_1564877728_RC2DU9AAFCNS_RTRMADP_3_CANADA-AGRICULTURE.JPG'} 
-                    alt={field.name} 
-                    className="img-fluid" 
-                  />
-                  {field.harvest && (
-                    <div className="harvested-badge">
-                      <FaCheck /> Harvested
-                    </div>
-                  )}
-                </div>
-                <div className="field-details">
-                  <h3 className="field-name">{field.name}</h3>
-                  
-                  <div className="field-info">
-                    <div className="info-item">
-                      <RiPlantFill className="icon" />
-                      <span>{field.crop || 'Not specified'}</span>
-                    </div>
-                    
-                    <div className="info-item">
-                      <FaRuler className="icon" />
-                      <span>{field.area || '0'} hectares</span>
-                    </div>
-                    
-                    <div className="info-item">
-                      <FaMapMarkerAlt className="icon" />
-                      <span>{field.location || 'Not specified'}</span>
-                    </div>
-                    
-                    <div className="info-item">
-                      <FaCalendarAlt className="icon" />
-                      <span>{field.plantation_date ? new Date(field.plantation_date).toLocaleDateString() : 'Not specified'}</span>
-                    </div>
-                    
-                    {field.description && (
-                      <div className="field-description">
-                        <p>{field.description}</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="field-health">
-                    <div className="health-bar">
-                      <div 
-                        className="health-level" 
-                        style={{ width: `${field.healthPercent || 85}%` }}
-                      ></div>
-                    </div>
-                    <div className="health-label">
-                      <FaLeaf className="icon" />
-                      <span>Crop Health: {field.healthPercent || 85}%</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="field-actions">
-                  <button 
-                    className="edit-btn" 
-                    onClick={() => handleEditClick(field)}
-                  >
-                    <FaEdit /> Edit
-                  </button>
-                  
-                  <button 
-                    className="delete-btn" 
-                    onClick={() => handleDeleteClick(field)}
-                  >
-                    <FaTrash /> Delete
-                  </button>
-                  
-                  <button 
-                    className={`${field.harvest ? 'active-btn' : 'harvest-btn'}`}
-                    onClick={() => handleHarvestClick(field)}
-                  >
-                    <FaCheck /> {field.harvest ? 'Mark as Active' : 'Mark as Harvested'}
-                  </button>
-                </div>
-              </div>
+            {fields.map((field) => (
+              <FieldCard 
+                key={field._id} 
+                field={field}
+                onEdit={handleEditClick}
+                onDelete={handleDeleteClick}
+                onToggleHarvest={handleHarvestClick}
+              />
             ))}
           </div>
         )}
       </div>
+      
       <div className="col-md-12 p-5">
-        <div className="no-field box-cont d-flex flex-column align-items-center gap-4">
-          <button className="primary-btn" onClick={() => toggleAddFieldForm()}>Add Another Field</button>
+        <div className="box-cont d-flex flex-column align-items-center gap-4">
+          <button className="primary-btn" onClick={toggleAddFieldForm}>Add Another Field</button>
         </div>
       </div>
     
-      {showAddFieldForm && (
-        <Modal showModal={showAddFieldForm} onClose={closeForm}>
-          <AddFieldForm token={token} setUserFieldData={setUserFieldData} navigate={navigate} />
-        </Modal>
-      )}
-
       {showModal && currentField && (
         <Modal showModal={showModal} onClose={closeModal}>
           <FieldEditForm 
@@ -465,9 +443,293 @@ const Fields = ({ token }) => {
         </Modal>
       )}
       
-      {showDeleteConfirm && fieldToDelete && <DeleteConfirmModal />}
-      {showHarvestConfirm && fieldToHarvest && <HarvestConfirmModal />}
+      {showDeleteConfirm && fieldToDelete && (
+        <DeleteConfirmModal 
+          showModal={showDeleteConfirm} 
+          onClose={closeDeleteConfirm} 
+          fieldName={fieldToDelete.name}
+          onConfirm={confirmDelete}
+        />
+      )}
       
+      {showHarvestConfirm && fieldToHarvest && (
+        <HarvestConfirmModal 
+          showModal={showHarvestConfirm} 
+          onClose={closeHarvestConfirm}
+          field={fieldToHarvest}
+          onConfirm={confirmHarvest}
+        />
+      )}
+      
+      {showAddFieldForm && (
+        <Modal showModal={showAddFieldForm} onClose={closeAddFieldForm}>
+          <AddFieldForm 
+            token={token} 
+            setUserFieldData={setUserFieldData}
+            navigate={navigate}
+            onSuccess={() => {
+              fetchActiveFields();
+              closeAddFieldForm();
+            }}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// HarvestedFields Component - completely separated
+const HarvestedFields = ({ token, fetchFields }) => {
+  const [fields, setFields] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddFieldForm, setShowAddFieldForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [currentField, setCurrentField] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [fieldToDelete, setFieldToDelete] = useState(null);
+  const [showHarvestConfirm, setShowHarvestConfirm] = useState(false);
+  const [fieldToHarvest, setFieldToHarvest] = useState(null);
+  const [userFieldData, setUserFieldData] = useState([]);
+  
+  const navigate = useNavigate();
+
+  const toggleAddFieldForm = () => setShowAddFieldForm(true);
+  const closeAddFieldForm = () => setShowAddFieldForm(false);
+  
+  const handleEditClick = (field) => {
+    setCurrentField(field);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setCurrentField(null);
+  };
+
+  const handleDeleteClick = (field) => {
+    setFieldToDelete(field);
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    setFieldToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!fieldToDelete) return;
+    
+    try {
+      const response = await fetch(`http://localhost:5000/fields/${fieldToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        fetchFields(); // Refresh fields after deletion
+        closeDeleteConfirm();
+      } else {
+        console.error('Failed to delete field');
+      }
+    } catch (error) {
+      console.error('Error deleting field:', error);
+    }
+  };
+
+  const handleHarvestClick = (field) => {
+    setFieldToHarvest(field);
+    setShowHarvestConfirm(true);
+  };
+
+  const closeHarvestConfirm = () => {
+    setShowHarvestConfirm(false);
+    setFieldToHarvest(null);
+  };
+
+  const confirmHarvest = async () => {
+    if (!fieldToHarvest) return;
+    
+    try {
+      const response = await fetch(`http://localhost:5000/fields/${fieldToHarvest.id}/harvest`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ harvest: !fieldToHarvest.harvest })
+      });
+
+      if (response.ok) {
+        fetchFields(); // Refresh fields after update
+        closeHarvestConfirm();
+      } else {
+        console.error('Failed to update harvest status');
+      }
+    } catch (error) {
+      console.error('Error updating harvest status:', error);
+    }
+  };
+
+  const fetchHarvestedFields = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/fields', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Filter only harvested fields
+        setFields(data.filter(field => field.harvest));
+      } else {
+        console.error('Failed to fetch fields');
+      }
+    } catch (error) {
+      console.error('Error fetching fields:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHarvestedFields();
+  }, [token]);
+
+  return (
+    <div className="harvested-fields-container">
+      <div className="row pad-5">
+        <div className="col-md-12 px-5 pt-5 border-bottom border-3">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h2 className="section-heading">Harvested Fields</h2>
+              <p className="section-subheading">View your previously harvested crops</p>
+            </div>
+          </div>
+          {fields.length > 0 && (
+            <div className="field-counts text-muted mb-3">
+              <span>Showing: {fields.length} harvested fields</span>
+            </div>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="col-md-12 text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : fields.length === 0 ? (
+          <div className="col-md-12 p-5">
+            <div className="no-field box-cont d-flex justify-content-center flex-column align-items-center gap-4">
+              <h3 className="text-grey">You don't have any harvested fields yet</h3>
+              <button className="primary-btn" onClick={toggleAddFieldForm}>Add New Field</button>
+            </div>
+          </div>
+        ) : (
+          <div className="fields-list py-4">
+            {fields.map((field) => (
+              <FieldCard 
+                key={field._id} 
+                field={field}
+                onEdit={handleEditClick}
+                onDelete={handleDeleteClick}
+                onToggleHarvest={handleHarvestClick}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {showModal && currentField && (
+        <Modal showModal={showModal} onClose={closeModal}>
+          <FieldEditForm 
+            field={currentField}
+            token={token}
+            onClose={closeModal}
+            updateFieldsList={fetchFields}
+          />
+        </Modal>
+      )}
+      
+      {showDeleteConfirm && fieldToDelete && (
+        <DeleteConfirmModal 
+          showModal={showDeleteConfirm} 
+          onClose={closeDeleteConfirm} 
+          fieldName={fieldToDelete.name}
+          onConfirm={confirmDelete}
+        />
+      )}
+      
+      {showHarvestConfirm && fieldToHarvest && (
+        <HarvestConfirmModal 
+          showModal={showHarvestConfirm} 
+          onClose={closeHarvestConfirm}
+          field={fieldToHarvest}
+          onConfirm={confirmHarvest}
+        />
+      )}
+      
+      {showAddFieldForm && (
+        <Modal showModal={showAddFieldForm} onClose={closeAddFieldForm}>
+          <AddFieldForm 
+            token={token} 
+            setUserFieldData={setUserFieldData}
+            navigate={navigate}
+            onSuccess={() => {
+              fetchHarvestedFields();
+              closeAddFieldForm();
+            }}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// Main Fields component that decides which view to show
+const Fields = ({ token, viewType = 'active' }) => {
+  const [fields, setFields] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchFields = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/fields', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFields(data);
+      } else {
+        console.error('Failed to fetch fields');
+      }
+    } catch (error) {
+      console.error('Error fetching fields:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFields();
+  }, [token]);
+
+  return (
+    <div className="fields-container pt-5" id="Fields">
+      {viewType === 'active' ? (
+        <ActiveFields token={token} fetchFields={fetchFields} />
+      ) : (
+        <HarvestedFields token={token} fetchFields={fetchFields} />
+      )}
     </div>
   );
 };
