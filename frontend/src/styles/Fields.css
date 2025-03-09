@@ -171,6 +171,44 @@
   transition: background-color 0.2s;
 }
 
+.active-btn {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.active-btn:hover {
+  background-color: #27ae60;
+}
+
+.harvest-btn {
+  background-color: #a4ba00;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.harvest-btn:hover {
+  background-color: #8e9e00;
+}
+
 .edit-btn:hover {
   background-color: #2980b9;
 }
