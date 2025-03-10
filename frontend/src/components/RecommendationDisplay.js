@@ -17,8 +17,15 @@ const RecommendationDisplay = ({ reportContent }) => {
   const thinkRegex = /<think>[\s\S]*?<\/think>/;
   const mainContent = reportContent.replace(thinkRegex, '').trim();
 
-  // 2. Replace literal "\n" with actual newlines
-  const replacedContent = mainContent.replace(/\\n/g, '\n');
+  // 2. Replace escape sequences with actual characters
+  const replacedContent = mainContent
+    .replace(/\\n/g, '\n')
+    .replace(/\\u2013/g, '–') // Replace \u2013 with en dash
+    .replace(/\\u2023/g, '-') // Replace \u2023 with hyphen
+    .replace(/\\u201([0-9])/g, (match, p1) => {
+      // Handle \u2010 to \u2019 range (various dashes and quotes)
+      return String.fromCharCode(parseInt('201' + p1, 16));
+    });
 
   // Custom component to handle sections with green borders
   const SectionWrapper = ({ children }) => {

@@ -9,7 +9,10 @@ from app.config import Config
 import rasterio
 from rasterio.enums import Resampling
 from rasterio.transform import from_origin, from_bounds
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 from pyproj import Transformer
 
 # Configure Sentinel Hub credentials

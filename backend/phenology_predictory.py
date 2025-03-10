@@ -11,17 +11,16 @@ import traceback
 PHENOLOGY_STAGES = ["bbch_00", "bbch_10", "bbch_31", "bbch_51", "bbch_75", "bbch_87", "bbch_99"]
 CHANNELS = ["blu", "grn", "nir", "re1", "re2", "re3", "red", "sw1", "sw2"]
 NORMALIZATION_VALUES = {
-    'blu': {'min': 1151, 'max': 2238},
-    'grn': {'min': 1380, 'max': 2432},
-    'nir': {'min': 2757, 'max': 6504},
-    're1': {'min': 1717, 'max': 3073},
-    're2': {'min': 2673, 'max': 5078},
-    're3': {'min': 2763, 'max': 5933},
-    'red': {'min': 1239, 'max': 2936},
-    'sw1': {'min': 2328, 'max': 3846},
-    'sw2': {'min': 1829, 'max': 3413}
-}
-
+        'blu': {'min': 151, 'max': 1238},
+        'grn': {'min': 380, 'max': 1432},
+        'nir': {'min': 1757, 'max': 5504},
+        're1': {'min': 717, 'max': 2073},
+        're2': {'min': 1673, 'max': 4078},
+        're3': {'min': 1763, 'max': 4933},
+        'red': {'min': 239, 'max': 1936},
+        'sw1': {'min': 1328, 'max': 2846},
+        'sw2': {'min': 829, 'max': 2413}
+    }
 class RNNModel(nn.Module):
     def __init__(self, input_size=9, hidden_size=32, output_size=7, num_layers=2):
         super(RNNModel, self).__init__()

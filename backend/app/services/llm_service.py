@@ -26,6 +26,10 @@ def generate_text(query, dir_path, name):
         
         # Raise an exception if the request was not successful
         response.raise_for_status()
+
+        response = response.json()
+
+        result = response.get('response')
         
         # Create the directory if it doesn't exist
         if not os.path.exists(dir_path):
@@ -36,7 +40,7 @@ def generate_text(query, dir_path, name):
         
         # Write the response content to the file
         with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(response.text)
+            file.write(result)
         
         print(f"Response successfully saved to {file_path}")
     

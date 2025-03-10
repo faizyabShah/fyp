@@ -236,9 +236,9 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute('INSERT INTO reports (file_id, end_date_str) VALUES (?, ?)', (id, end_date_str))
+    cursor.execute('INSERT INTO reports (field_id, report_date) VALUES (?, ?)', (id, end_date_str))
     conn.commit()
     conn.close()
 
-    
+
 

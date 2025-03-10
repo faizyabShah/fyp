@@ -15,7 +15,7 @@ def signup():
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
 
-    email, password, name, phone, language, address = data.values()
+    name, email, password, phone, language, address = data.values()
     conn = get_db_connection()
     cursor = conn.cursor()
 
