@@ -76,10 +76,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS satellite (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             field_id INTEGER NOT NULL,
+            field_name TEXT NOT NULL,
+            user_email TEXT NOT NULL,
             observation_date TEXT NOT NULL,  -- ISO date string for the observation date
-            phenological_stages TEXT NOT NULL,  -- JSON array string storing detailed phenological stages
-            sat_image TEXT,
-            sat_overlay TEXT,
             FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
         )
     ''')

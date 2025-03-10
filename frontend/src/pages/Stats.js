@@ -132,7 +132,7 @@ const Stats = ({
                 <RecommendationDisplay reportContent={recommendation} />
               ) : (
                 <div className="box-cont d-flex justify-content-center align-items-center p-5">
-                  <p className="text-grey">No recommendations available for this field yet.</p>
+                  <p className="text-grey">Recommendations for the field will be available soon.</p>
                 </div>
               )}
             </div>
