@@ -47,7 +47,9 @@ def add_field():
     if not matches:
         return jsonify({'error': 'Invalid coordinates format'}), 400
     
-    coordinates = [(float(lat), float(lon)) for lat, lon in matches]
+    coordinates = [[float(lon), float(lat)] for lat, lon in matches]
+
+    print(coordinates)
 
     conn.close()
 
@@ -65,15 +67,15 @@ def add_field():
 
 
 
-    # import threading
-    # thread = threading.Thread(
-    #     target=process_sentinel_imagery,
-    #     args=(coordinates, user.get('email', 'user'), data['name'], field_id)
-    # )
-    # thread.daemon = True
-    # thread.start()
+    import threading
+    thread = threading.Thread(
+        target=process_sentinel_imagery,
+        args=(coordinates, user.get('email', 'user'), data['name'], field_id)
+    )
+    thread.daemon = True
+    thread.start()
 
-    process_sentinel_imagery(coordinates, user.get('email', 'user'), data['name'], field_id)
+    # process_sentinel_imagery(coordinates, user.get('email', 'user'), data['name'], field_id)
 
     
     return jsonify({'message': 'Field added successfully'}), 201
@@ -197,33 +199,46 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
     except Exception as e:
         print(f"Error in process_sentinel_imagery: {str(e)}")
 
-    # end_date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    end_date_str = datetime.datetime.now() - datetime.timedelta(days=1)
+    end_date_str = end_date_str.strftime("%Y-%m-%d")
 
-    # # insert this into the table satellite
-    # conn = get_db_connection()
-    # cursor = conn.cursor()
+    # insert this into the table satellite
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    # cursor.execute('INSERT INTO satellite (field_id, field_name, user_email, observation_date) VALUES (?, ?, ?, ?)',
-    #                (id, name, username, end_date_str))
-    # conn.commit()
-    # conn.close()
+    cursor.execute('INSERT INTO satellite (field_id, field_name, user_email, observation_date) VALUES (?, ?, ?, ?)',
+                   (id, name, username, end_date_str))
+    conn.commit()
+    conn.close()
 
-    # process_with_mask(
-    #     tiff_dir=f"C:/New folder/sat_data/{username}_{name}",
-    #     output_dir=f"C:/New folder/sat_data/{username}_{name}",
-    # )
+    print("predicting")
+    process_with_mask(
+        tiff_dir=f"C:/New folder/sat_data/{username}_{name}",
+        output_dir=f"C:/New folder/sat_data/{username}_{name}",
+    )
 
-    # csv_file_path =  f"C:/New folder/sat_data/{username}_{name}/{end_date_str}.csv"
-    # df = pd.read_csv(csv_file_path)
-    # stage_counts = df['stage_name'].value_counts()
+    print("reading csv")
+
+    csv_file_path =  f"C:/New folder/sat_data/{username}_{name}/{end_date_str}.csv"
+    df = pd.read_csv(csv_file_path)
+    stage_counts = df['stage_name'].value_counts()
     
     
-    # stage = stage_counts.idxmax()
+    stage = stage_counts.idxmax()
 
-    # stage_name = bbch_dict.get(stage, ["Unknown"])
+    stage_name = bbch_dict.get(stage, ["Unknown"])
+
+    print("sending query")
+    query = f"Give me recommendations for the crop at stage {stage} or {stage_name}"
+
+    generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('INSERT INTO reports (file_id, end_date_str) VALUES (?, ?)', (id, end_date_str))
+    conn.commit()
+    conn.close()
 
     
-    # query = f"Give me recommendations for the crop at stage {stage} or {stage_name}"
-
-    # generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
 

@@ -185,7 +185,7 @@ def process_with_mask(
         output_dir,
         mask_file=None,  # Optional: Path to a binary mask file
         mask_value=1,     # Value in mask that indicates pixels to process
-        model_path='./model/best.pth'
+        model_path='C:/New folder/model/best.pth'
     ):
     """
     Process an entire TIFF using a mask to identify relevant pixels.

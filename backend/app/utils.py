@@ -1,7 +1,7 @@
 from sentinelhub import DataCollection, SHConfig, SentinelHubRequest, CRS, BBox, MimeType, bbox_to_dimensions
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime, timedelta
 import numpy as np
 from PIL import Image
@@ -65,7 +65,8 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
     bbox = BBox(bbox=[utm_min_x, utm_min_y, utm_max_x, utm_max_y], crs=CRS.UTM_43N)
     print("got bbxo")
     # Define a time range
-    end_date = datetime.now()
+    # end_date = datetime.now()
+    end_date = datetime.now() - timedelta(days=1)
 
     # Calculate the start date based on the number of days
     start_date = end_date - timedelta(days=days)
