@@ -133,44 +133,8 @@ const UAV = ({
                 </div>
 
                 <div className="col-md-12 px-5 pt-5 border-bottom border-3">
-                  <h2 className="section-heading">Recommendations</h2>
-                </div>
-                
-                <div className="col-md-12 p-3">
-                  {recommendation ? (
-                    <RecommendationDisplay reportContent={recommendation} />
-                  ) : (
-                    <div className="box-cont d-flex justify-content-center align-items-center p-5">
-                      <p className="text-grey">No recommendations available for this field yet.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="tabs-container">
-            <button 
-                className={`tab-btn ${activeTab === 'satellite' ? 'active' : ''}`}
-                onClick={() => setActiveTab('satellite')}>
-                Satellite
-            </button>
-            <button 
-                className={`tab-btn ${activeTab === 'uav' ? 'active' : ''}`}
-                onClick={() => setActiveTab('uav')}>
-                UAV
-            </button>
-            <button 
-                className={`tab-btn ${activeTab === 'recommendations' ? 'active' : ''}`}
-                onClick={() => setActiveTab('recommendations')}>
-                Recommendations
-            </button>
-            </div>
-
-            {activeTab === 'satellite' && (
-            <></>
-            )}
-            {activeTab === 'uav' && (
-            <>
-                <div className="col-md-12 px-5 pt-5 border-bottom border-3">
-                <h2 className="section-heading">UAV Requests</h2>
+                  <h2 className="section-heading">UAV view</h2>
+                  <div className="col-md-12 px-5 pt-5 border-bottom border-3">
                 </div>
                 <div className="col-md-12 p-3">
                 <div className="box-cont">
@@ -190,8 +154,21 @@ const UAV = ({
                     </div>
                 </div>
                 </div>
-            </>
-            )}
+                </div>
+
+                <div className="col-md-12 px-5 pt-5 border-bottom border-3">
+                  <h2 className="section-heading">Recommendations</h2>
+                </div>
+                
+                <div className="col-md-12 p-3">
+                  {recommendation ? (
+                    <RecommendationDisplay reportContent={recommendation} />
+                  ) : (
+                    <div className="box-cont d-flex justify-content-center align-items-center p-5">
+                      <p className="text-grey">No recommendations available for this field yet.</p>
+                    </div>
+                  )}
+                </div>
             </>
             
           )}
