@@ -11,7 +11,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # Import the necessary functions from your original script
 from phenology_predictory import (
-    RNNModel, predict_phenological_stage_one_pixel, 
+    PhenologyRNNModel, predict_phenological_stage_one_pixel, 
     PHENOLOGY_STAGES, CHANNELS, NORMALIZATION_VALUES
 )
 
@@ -58,10 +58,11 @@ def process_entire_tiff(
     
     # Load model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = RNNModel()
+    phen_model = PhenologyRNNModel()
     loaded_checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(loaded_checkpoint['model'])
-    model.to(device)
+    phen_model.load_state_dict(loaded_checkpoint['model'])
+    phen_model.to(device)
+
     
     # Get spatial reference from a sample TIFF
     if sample_tiff is None:
@@ -104,7 +105,7 @@ def process_entire_tiff(
                 predict_phenological_stage_one_pixel, 
                 tiff_dir, 
                 (x, y), 
-                model, 
+                phen_model, 
                 device,
                 band_indices,
                 NORMALIZATION_VALUES,

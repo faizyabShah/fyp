@@ -3,6 +3,7 @@ from app.database import get_db_connection
 from app.middleware.auth_middleware import authenticate_request
 from app.utils import fetch_sentinel_imagery
 from phenology_main import process_with_mask
+from yield_main import generate_predictions_and_save_csv
 from app.routes.generate import generate_text
 import pandas as pd
 import re
@@ -216,11 +217,16 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
         tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
         output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
     )
+    process_with_mask(
+        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
+        output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
+    )
 
     print("reading csv")
 
-    csv_file_path =  f"C:/New folder/frontend/public/media/{username}_{name}/{end_date_str}.csv"
-    df = pd.read_csv(csv_file_path)
+    yield_csv_file_path = f"C:/New folder/sat_data/{username}_{name}/yield_report.csv"
+    phen_csv_file_path =  f"C:/New folder/sat_data/{username}_{name}/{end_date_str}.csv"
+    df = pd.read_csv(phen_csv_file_path)
     stage_counts = df['stage_name'].value_counts()
     
     

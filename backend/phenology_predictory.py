@@ -21,9 +21,9 @@ NORMALIZATION_VALUES = {
         'sw1': {'min': 1328, 'max': 2846},
         'sw2': {'min': 829, 'max': 2413}
     }
-class RNNModel(nn.Module):
+class PhenologyRNNModel(nn.Module):
     def __init__(self, input_size=9, hidden_size=32, output_size=7, num_layers=2):
-        super(RNNModel, self).__init__()
+        super(PhenologyRNNModel, self).__init__()
         self.rnn = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
 
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     tiff_folder = "./data/sentinel_data"
     pixel_coordinate = (5, 5)  # Example (x, y) coordinate
 
-    model = RNNModel()
+    model = PhenologyRNNModel()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     loaded_checkpoint = torch.load('./data/model_wieghts/narc_satellite_phen_model.pth', map_location=device)
     model.load_state_dict(loaded_checkpoint['model'])
