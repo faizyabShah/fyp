@@ -153,8 +153,15 @@ def process_entire_tiff(
     
     # Create a visualization with matplotlib
     # Define a colormap for the phenology stages
-    colors = ['#000000', '#3cb44b', '#4363d8', '#ffe119', 
-              '#f58231', '#911eb4', '#e6194B']
+    colors = [
+    '#FF0000', 
+    '#FF8033',
+    '#FFFF00', 
+    '#66FF4D', 
+    '#0000FF', 
+    '#FF00FF', 
+    '#00FFFF' 
+  ]
     cmap = mcolors.ListedColormap(colors)
     
     # Set up boundaries for the colormap

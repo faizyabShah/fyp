@@ -2,11 +2,8 @@ import React from 'react';
 import FieldDisplay from '../components/FieldDisplay';
 import PhenologyData from '../components/PhenologyData';
 import WeatherWidget from '../components/WeatherWidget';
-import Legend from '../components/Legend';
-import AddFieldForm from '../components/AddFieldForm';
-import Modal from '../components/Modal';
-import RecommendationDisplay from '../components/RecommendationDisplay'; // Import the new component
-import { IoIosRefresh } from 'react-icons/io';
+import SatelliteViewer from '../components/SatelliteViewer'; // Import the new component
+import RecommendationDisplay from '../components/RecommendationDisplay';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,11 +15,10 @@ const Stats = ({
 
   const [userFieldData, setUserFieldData] = useState([]);
   const [selectedField, setSelectedField] = useState(null);
-  const [activeTab, setActiveTab] = useState('satellite'); // Default tab is 'stats'
   const [recommendation, setRecommendation] = useState('');
   const navigate = useNavigate();
 
-  const fetchUserFields = async (userEmail) => {
+  const fetchUserFields = async () => {
     try {
       const response = await fetch(`http://localhost:5000/fields`, {
         method: 'GET',
@@ -45,7 +41,7 @@ const Stats = ({
     }
   };
 
-  // New function to fetch recommendation
+  // Function to fetch recommendation
   const fetchRecommendation = async () => {
     if (!selectedField) return;
     
@@ -75,7 +71,6 @@ const Stats = ({
 
   useEffect(() => {
     if (selectedField) {
-      console.log("CALLED")
       fetchRecommendation();
     }
   }, [selectedField]);
@@ -121,6 +116,9 @@ const Stats = ({
 
             <div className="col-md-12 px-5 pt-5 border-bottom border-3">
               <h2 className="section-heading">Satellite View</h2>
+            </div>
+            <div className="col-md-12 p-3">
+              <SatelliteViewer selectedField={selectedField} token={token} />
             </div>
 
             <div className="col-md-12 px-5 pt-5 border-bottom border-3">

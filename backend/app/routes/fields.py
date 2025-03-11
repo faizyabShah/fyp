@@ -213,13 +213,13 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
 
     print("predicting")
     process_with_mask(
-        tiff_dir=f"C:/New folder/sat_data/{username}_{name}",
-        output_dir=f"C:/New folder/sat_data/{username}_{name}",
+        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
+        output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
     )
 
     print("reading csv")
 
-    csv_file_path =  f"C:/New folder/sat_data/{username}_{name}/{end_date_str}.csv"
+    csv_file_path =  f"C:/New folder/frontend/public/media/{username}_{name}/{end_date_str}.csv"
     df = pd.read_csv(csv_file_path)
     stage_counts = df['stage_name'].value_counts()
     
