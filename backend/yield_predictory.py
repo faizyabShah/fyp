@@ -59,17 +59,19 @@ def read_field_tiff_features_yield(tiff_dir, band_indices, channels):
     files = [f for f in os.listdir(tiff_dir) if f.endswith('.tif') or f.endswith('.tiff')]
     
     # Use regex to extract a date in the format YYYY-MM-DD from the filename.
-    date_pattern = re.compile(r"(\d{4}-\d{2}-\d{2})")
+    date_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2})\.tiff$')
+
     file_date_tuples = []
     for file in files:
-        match = date_pattern.search(file)
+        match = date_pattern.fullmatch(file)
         if match:
-            date_str = match.group(1)
+            date_str = match.group(1)  # Captures the date portion
             try:
                 date_obj = datetime.strptime(date_str, '%Y-%m-%d')
                 file_date_tuples.append((date_obj, file))
             except ValueError:
                 print(f"Skipping {file}: Could not parse date {date_str}")
+
     
     # Sort files by date.
     file_date_tuples.sort(key=lambda x: x[0])

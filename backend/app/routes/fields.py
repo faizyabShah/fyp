@@ -279,7 +279,7 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
     print("sending query")
     query = f"Give me recommendations for the crop at stage {stage} or {stage_name}"
 
-    # generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
+    generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
 
     conn = get_db_connection()
     cursor = conn.cursor()

@@ -20,7 +20,6 @@ const UAV = ({
 }) => {
 
   const [userFieldData, setUserFieldData] = useState([]);
-  const [activeTab, setActiveTab] = useState('satellite'); // Default tab is 'stats'
   const [selectedField, setSelectedField] = useState(null);
   const [recommendation, setRecommendation] = useState('');
   const navigate = useNavigate();
@@ -128,7 +127,7 @@ const UAV = ({
                 </div>
                 <div className="col-md-5 p-3">
                     <div className="box-cont">
-                    <PhenologyData selectedField={selectedField} />
+                    <PhenologyData selectedField={selectedField} phenStage={"Grain Filling"} />
                     </div>
                 </div>
 
@@ -149,7 +148,7 @@ const UAV = ({
                     </div>
                     </div>
                     <div className="text-center py-4 my-2">
-                    <button onClick={() => getPredictions(0)} className='primary-btn mx-1'>Get Live Predictions</button>
+                    <button onClick={() => setFieldImg('./media/field_masked.jpg')} className='primary-btn mx-1'>Get Live Predictions</button>
                     <button onClick={() => getPredictions(1)} className='primary-btn mx-1'><IoIosRefresh style={{ margin: "-10px" }} /></button>
                     </div>
                 </div>
