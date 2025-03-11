@@ -412,6 +412,7 @@ const ActiveFields = ({ token, fetchFields }) => {
             </div>
           </div>
         ) : (
+          <>
           <div className="fields-list py-4">
             {fields.map((field) => (
               <FieldCard 
@@ -423,14 +424,16 @@ const ActiveFields = ({ token, fetchFields }) => {
               />
             ))}
           </div>
+          <div className="col-md-12 p-5">
+          <div className="box-cont d-flex flex-column align-items-center gap-4">
+            <button className="primary-btn" onClick={toggleAddFieldForm}>Add Another Field</button>
+          </div>
+        </div>
+        </>
         )}
       </div>
       
-      <div className="col-md-12 p-5">
-        <div className="box-cont d-flex flex-column align-items-center gap-4">
-          <button className="primary-btn" onClick={toggleAddFieldForm}>Add Another Field</button>
-        </div>
-      </div>
+      
     
       {showModal && currentField && (
         <Modal showModal={showModal} onClose={closeModal}>

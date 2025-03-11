@@ -6,6 +6,7 @@ import SatelliteViewer from '../components/SatelliteViewer'; // Import the new c
 import RecommendationDisplay from '../components/RecommendationDisplay';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { use } from 'react';
 
 const Stats = ({
   userName,
@@ -16,6 +17,8 @@ const Stats = ({
   const [userFieldData, setUserFieldData] = useState([]);
   const [selectedField, setSelectedField] = useState(null);
   const [recommendation, setRecommendation] = useState('');
+  const [phenStage, setPhenStage] = useState(null);
+  const [yeeeld, setYield] = useState(null);
   const navigate = useNavigate();
 
   const fetchUserFields = async () => {
@@ -40,6 +43,36 @@ const Stats = ({
       console.error('Error fetching user fields:', error);
     }
   };
+
+  const fetchPhenologyStage = async () => {
+    if (!selectedField) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/fields/${selectedField.id}/phenology_stage`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPhenStage(data.phenology_stage);
+        setYield(data.yield);
+      } else {
+        console.error('Failed to fetch phenology stage');
+        setPhenStage(null);
+        setYield(null);
+      }
+    } catch (error) {
+      console.error('Error fetching phenology stage:', error);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchPhenologyStage();
+  }, [selectedField]);
 
   // Function to fetch recommendation
   const fetchRecommendation = async () => {
@@ -110,7 +143,7 @@ const Stats = ({
             </div>
             <div className="col-md-5 p-3">
               <div className="box-cont">
-                <PhenologyData selectedField={selectedField} />
+                <PhenologyData selectedField={selectedField} phenStage={phenStage} yeeeld={yeeeld}/>
               </div>
             </div>
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import "../styles/PhenologyData.css";
-import { FaEdit, FaCheck, FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler } from 'react-icons/fa';
+import { FaLeaf, FaMapMarkerAlt, FaCalendarAlt, FaRuler } from 'react-icons/fa';
 import { PiFarmFill } from "react-icons/pi";
 import { FaCalendarDay } from "react-icons/fa6";
 import { RiPlantFill } from 'react-icons/ri';
+import { GiWeight } from 'react-icons/gi'; // Added for yield icon
+import "../styles/PhenologyData.css";
 
 // Function to parse coordinates and calculate area using Turf.js
 function parseLatLngString(str) {
@@ -16,8 +17,6 @@ function parseLatLngString(str) {
       return [parseFloat(latStr), parseFloat(lngStr)];
     });
 }
-
-
 
 function getDayOfYear(dateString) {
   const givenDate = new Date(dateString);
@@ -33,8 +32,7 @@ function getDayOfYear(dateString) {
   return Math.floor(diff / oneDay);
 }
 
-
-const PhenologyData = ({ selectedField }) => {
+const PhenologyData = ({ selectedField, phenStage, yeeeld }) => {
   const [cropData, setCropData] = useState({
     cropType: "",
     cropName: "",
@@ -47,7 +45,7 @@ const PhenologyData = ({ selectedField }) => {
 
   const [dayOfYear, setDayOfYear] = useState(0);
   const [scheduled, setScheduled] = useState(0);
-  const [phenStage, setPhenStage] = useState(null);
+  const [totalProduction, setTotalProduction] = useState(0);
 
   useEffect(() => {
     if (!selectedField) return;
@@ -62,58 +60,155 @@ const PhenologyData = ({ selectedField }) => {
     };
   
     setCropData(updatedData);
-  
-    const coords = parseLatLngString(updatedData.coordinates);
-
-  
     const doy = getDayOfYear(updatedData.plantationDate);
     setDayOfYear(doy);
-  
-    setPhenStage("Grain Filling");
     setScheduled(0);
-  }, [selectedField]);
+    
+    // Calculate total production (yield * area)
+    const yieldValue = yeeeld || 0;
+    const areaValue = parseFloat(updatedData.area) || 0;
+    setTotalProduction(yieldValue * areaValue);
+  }, [selectedField, yeeeld]);
   
+  // Function to get appropriate growth stage color and icon
+  const getGrowthStageInfo = (stage) => {
+    if (!stage) return { color: "#f0f0f0", icon: "🌱" };
+    
+    const stageMap = {
+      "Germination": { color: "#a8e6cf", icon: "🌱" },
+      "Tillering": { color: "#b8e0d2", icon: "🌿" },
+      "Jointing": { color: "#d8e2dc", icon: "🥬" },
+      "Booting/Heading": { color: "#eac4d5", icon: "🌾" },
+      "Anthesis": { color: "#ffd3b6", icon: "🌼" },
+      "Grain Filling": { color: "#fdffb6", icon: "🌽" },
+      "Maturity": { color: "#caffbf", icon: "🌾" },
+    };
+    
+    return stageMap[stage] || { color: "#f0f0f0", icon: "🌱" };
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not specified";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const stageInfo = getGrowthStageInfo(phenStage || cropData.latestPhenologyStage);
+  const hasPhenStage = !!(phenStage || cropData.latestPhenologyStage);
+  const hasYield = !!(yeeeld > 0);
 
   return (
-    <div className="p-2">
-      <h4 className="mb-4">Crop Information</h4>
-      <div className="d-flex my-2 justify-content-center flex-column align-items-center">
-        {/* <img className="img-fluid phen-stage-img" src="./media/chatbot.png" alt="Phenology stage" /> */}
-        <h2 className="px-3">{cropData.latest_phenology_stage}</h2>
+    <div className="phenology-container">
+      <div className="phenology-header">
+        <h3>Crop Information</h3>
+      </div>
+      
+      {/* Field Name */}
+      <div className="field-name-container">
+        <PiFarmFill className="field-icon" />
+        <h2>{cropData.cropName || 'Unnamed Field'}</h2>
+      </div>
+      
+      {/* Badges Container - will contain both phenology and yield badges side by side */}
+      <div className={`badges-container ${(hasPhenStage && hasYield) ? 'two-badges' : ''}`}>
+        {/* Phenology Stage Badge */}
+        {hasPhenStage && (
+          <div className="stage-badge-container">
+            <div 
+              className="stage-badge"
+              style={{ backgroundColor: stageInfo.color }}
+            >
+              <span className="stage-icon">{stageInfo.icon}</span>
+              <div className="stage-label">Current Growth Stage</div>
+              <div className="stage-value">{phenStage || cropData.latestPhenologyStage}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Yield Badge */}
+        {hasYield && (
+          <div className="yield-badge-container">
+            <div className="yield-badge">
+              <GiWeight className="yield-icon" />
+              <div className="yield-details">
+                <div className="yield-metric">
+                  <span className="yield-label">Yield</span>
+                  <span className="yield-value">{yeeeld ? `${yeeeld.toFixed(2)} t/ha` : "N/A"}</span>
+                </div>
+                <div className="yield-metric">
+                  <span className="yield-label">Est. Total Production</span>
+                  <span className="yield-value">{totalProduction ? `${totalProduction.toFixed(2)} tonnes` : "N/A"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="d-flex justify-content-center mb-3">
-        <div className="field-info">
-          <div className="info-item">
-            <PiFarmFill className="icon-big" />
-            <span className="headddd">{cropData.cropName || 'Not specified'}</span>
+      {/* Details Cards */}
+      <div className="info-grid">
+        <div className="info-card">
+          <RiPlantFill className="card-icon crop-icon" />
+          <div>
+            <div className="card-label">Crop Type</div>
+            <div className="card-value">{cropData.cropType || 'Not specified'}</div>
           </div>
         </div>
-      </div>
+        
+        <div className="info-card">
+          <FaRuler className="card-icon area-icon" />
+          <div>
+            <div className="card-label">Field Area</div>
+            <div className="card-value">{cropData.area ? `${cropData.area} hectares` : '0 hectares'}</div>
+          </div>
+        </div>
 
-      <div className="d-flex justify-content-center mb-3">
-        <div className="field-info">
-          <div className="info-item">
-            <FaRuler className="icon" />
-            <span>{cropData.area || '0'} hectares</span>
+        <div className="info-card">
+          <FaCalendarAlt className="card-icon date-icon" />
+          <div>
+            <div className="card-label">Planted On</div>
+            <div className="card-value">{formatDate(cropData.plantationDate)}</div>
           </div>
         </div>
-        <div className="field-info">
-            <div className="info-item">
-            <RiPlantFill className="icon" />
-            <span>{cropData.cropType || 'Not specified'}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="d-flex justify-content-center mb-3">
-      <div className="field-info">
-            <div className="info-item">
-            <FaCalendarDay  className="icon" />
-            <span>Day of Year {dayOfYear}</span>
+        
+        <div className="info-card">
+          <FaCalendarDay className="card-icon day-icon" />
+          <div>
+            <div className="card-label">Growth Day</div>
+            <div className="card-value">Day {dayOfYear}</div>
           </div>
         </div>
       </div>
+      
+      {/* Growth Progress Bar */}
+      {dayOfYear > 0 && (
+        <div className="growth-progress-container">
+          <div className="progress-label-container">
+            <span>Planted</span>
+            <span>Harvest Ready</span>
+          </div>
+          <div className="progress-bar-background">
+            <div 
+              className="progress-bar-fill" 
+              style={{ width: `${Math.min(dayOfYear / 120 * 100, 100)}%` }}
+            ></div>
+          </div>
+          <div className="progress-percentage">
+            Estimated growth: {Math.min(Math.round(dayOfYear / 120 * 100), 100)}%
+          </div>
+        </div>
+      )}
+      
+      {/* Last Observation */}
+      {cropData.latestObservationDate && (
+        <div className="last-observation">
+          Last observation: {formatDate(cropData.latestObservationDate)}
+        </div>
+      )}
     </div>
   );
 };

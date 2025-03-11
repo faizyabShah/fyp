@@ -79,6 +79,8 @@ def init_db():
             field_name TEXT NOT NULL,
             user_email TEXT NOT NULL,
             observation_date TEXT NOT NULL,  -- ISO date string for the observation date
+            phenology_stage TEXT,
+            yield REAL,
             FOREIGN KEY(field_id) REFERENCES fields(id) ON DELETE CASCADE
         )
     ''')

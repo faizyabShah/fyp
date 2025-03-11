@@ -10,7 +10,7 @@ from yield_predictory import (
 def generate_predictions_and_save_csv(
         tiff_dir, 
         output_dir, 
-        model_path=r"c:\Users\hassa\Downloads\best (6).pth", 
+        model_path=r"C:/New folder/model/yield.pth", 
         output_filename="yield_report.csv"):
     """
     Loop through all pixel coordinates in the TIFF file, predict yield for each,

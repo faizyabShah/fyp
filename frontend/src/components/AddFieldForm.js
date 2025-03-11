@@ -128,7 +128,6 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
                             />
                         </div>
                         
-                        <button onClick={consolee}>Test</button>
                         
                         <button type="submit" className="primary-btn">Add Field</button>
                     </div>

@@ -8,17 +8,18 @@ from app.routes.generate import generate_text
 import pandas as pd
 import re
 import datetime
+import os
 
 fields_bp = Blueprint('fields', __name__)
 
 bbch_dict = {
-    "bbch_00": ["Germination"],
-    "bbch_10": ["Tillering"],
-    "bbch_31": ["Jointing"],
-    "bbch_51": ["Booting", "Heading"],  # Both stages assigned to bbch_51
-    "bbch_75": ["Anthesis"],
-    "bbch_87": ["Grain Filling"],
-    "bbch_99": ["Maturity"]
+    "bbch_00": "Germination",
+    "bbch_10": "Tillering",
+    "bbch_31": "Jointing",
+    "bbch_51": "Booting/Heading",  # Both stages assigned to bbch_51
+    "bbch_75": "Anthesis",
+    "bbch_87": "Grain Filling",
+    "bbch_99": "Maturity"
 }
 
 
@@ -183,7 +184,33 @@ def mark_field_harvested(field_id):
     conn.close()
     return jsonify({'message': 'Field marked as harvested successfully'}), 200
 
+@fields_bp.route('/fields/<int:field_id>/phenology_stage', methods=['GET'])
+def get_phenology_stage(field_id):
+    """Get the phenology stage of the"
+    "specified field."""
+    user = authenticate_request()
+    if isinstance(user, tuple):
+        return user
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute('SELECT phenology_stage, yield FROM satellite WHERE field_id = ? ORDER BY observation_date DESC LIMIT 1', (field_id,))
+    report_result = cursor.fetchone()
+
+    if not report_result:
+        conn.close()
+        return jsonify({'error': 'No report found for the field'}), 404
+
+    report_stage = report_result[0]
+    yield_value = report_result[1]
+    conn.close()
+
+    return jsonify({
+        'phenology_stage': report_stage,
+        'yield': yield_value
+    }), 200
 
 
 def process_sentinel_imagery(polygon_coords, username, name, id):
@@ -213,19 +240,28 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
     conn.close()
 
     print("predicting")
-    process_with_mask(
-        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
-        output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
-    )
+
+    if not os.path.exists(f"C:/New folder/sat_data/{username}_{name}"):
+        os.makedirs(f"C:/New folder/sat_data/{username}_{
+            name}"
+            )
+        
     process_with_mask(
         tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
         output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
     )
 
+        
+    generate_predictions_and_save_csv(
+        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
+        output_dir=f"C:/New folder/sat_data/{username}_{name}",
+    )
+    
+    
     print("reading csv")
 
     yield_csv_file_path = f"C:/New folder/sat_data/{username}_{name}/yield_report.csv"
-    phen_csv_file_path =  f"C:/New folder/sat_data/{username}_{name}/{end_date_str}.csv"
+    phen_csv_file_path =  f"C:/New folder/frontend/public/media/{username}_{name}/{end_date_str}.csv"
     df = pd.read_csv(phen_csv_file_path)
     stage_counts = df['stage_name'].value_counts()
     
@@ -234,13 +270,25 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
 
     stage_name = bbch_dict.get(stage, ["Unknown"])
 
+    df2 = pd.read_csv(yield_csv_file_path)
+    # select the last row
+    last_row = df2.iloc[-1]
+    yield_value = last_row['yield']
+
+
     print("sending query")
     query = f"Give me recommendations for the crop at stage {stage} or {stage_name}"
 
-    generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
+    # generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    print(stage_name)
+    print(yield_value)
+    yield_value = float(yield_value)
+
+    cursor.execute('UPDATE satellite SET phenology_stage = ?, yield = ? WHERE field_id = ?', (stage_name, yield_value, id))
 
     cursor.execute('INSERT INTO reports (field_id, report_date) VALUES (?, ?)', (id, end_date_str))
     conn.commit()
