@@ -17,9 +17,9 @@ from pyproj import Transformer
 
 # Configure Sentinel Hub credentials
 config = SHConfig()
-config.instance_id = 'b9daf03a-30ee-4e86-a566-c2348cc78bf5'
-config.sh_client_id = '2a8d049e-8c7a-4677-893f-fbbf5581e6c1'
-config.sh_client_secret = 'KjCxs153Bg5ae8FSWFaexv3hNgtUxMLn'
+config.instance_id = '0a26c1fc-c12a-456f-b795-28ebeba0e142'
+config.sh_client_id = 'a3265009-a113-42de-b298-6722d4bbbb7c'
+config.sh_client_secret = 'IpUFFJJn3ihYofil3FcH4Fat7Wd6Ptau'
 
 configuration = Config()
 
@@ -83,7 +83,7 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
     bbox_size = bbox_to_dimensions(bbox, resolution=10)
     print("dimeed")
     # Check if dimensions are too large
-    max_pixels = 2500 * 2500  # Reasonable maximum size to avoid memory issues
+    max_pixels = 4500 * 4500  # Reasonable maximum size to avoid memory issues
     if bbox_size[0] * bbox_size[1] > max_pixels:
         scale_factor = np.sqrt(max_pixels / (bbox_size[0] * bbox_size[1]))
         new_width = int(bbox_size[0] * scale_factor)
@@ -254,6 +254,7 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
         
         # Calculate the transform for the correct coordinates in UTM
         transform = from_bounds(utm_min_x, utm_min_y, utm_max_x, utm_max_y, width, height)
+        crs = 'EPSG:32643'  # UTM zone 43N
         
         # Save the multiband image
         try:
@@ -293,18 +294,15 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
             print(f"Successfully saved {len(band_order)} bands to {image_path}")
             
             # Generate and save RGB preview
-            preview_path = os.path.join(directory_path, f"{end_date_str}_preview.png")
-            print("creating rgb prev")
-            create_rgb_preview(band_data, preview_path)
-            print("creating ndvi ones")
-            ndvi_path = os.path.join(directory_path, f"{end_date_str}_NDVI.png")
-            create_ndvi_image(band_data, ndvi_path)
+            preview_path = os.path.join(directory_path, f"{end_date_str}_preview.tiff")
+            create_rgb_preview(band_data, preview_path, transform, crs)
 
-            # Generate and save false color composite (if you want a second false color variant, change the bands list)
-            false_color_path = os.path.join(directory_path, f"{end_date_str}_false_color.png")
-            print("now false color")
-            create_false_color_composite(band_data, false_color_path, bands=['B08', 'B04', 'B03'])
-            
+            ndvi_path = os.path.join(directory_path, f"{end_date_str}_NDVI.tiff")
+            create_ndvi_image(band_data, ndvi_path, transform, crs)
+
+            false_color_path = os.path.join(directory_path, f"{end_date_str}_false_color.tiff")
+            create_false_color_composite(band_data, false_color_path, transform, crs, bands=['B08', 'B04', 'B03'])
+
             return True
             
         except Exception as e:
@@ -317,16 +315,20 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
         print(error_message)
         return {"error": error_message}
 
-def create_rgb_preview(band_data, save_path, scale_factor=9, contrast_stretch=True):
+def create_rgb_preview(band_data, save_path, transform, crs, scale_factor=9, contrast_stretch=True):
     """
-    Create an RGB preview image from the band data with improved normalization and interpolation
+    Create an RGB preview image from the band data and save as GeoTIFF
     
     Parameters:
     -----------
-    band_data : dictm
+    band_data : dict
         Dictionary containing band data
     save_path : str
         Path to save the RGB preview image
+    transform : Affine
+        Spatial transform information
+    crs : str or CRS
+        Coordinate Reference System
     scale_factor : int, optional
         Factor to increase resolution by using interpolation (default=3)
     contrast_stretch : bool, optional
@@ -338,106 +340,130 @@ def create_rgb_preview(band_data, save_path, scale_factor=9, contrast_stretch=Tr
         green = band_data['B03'].copy()
         blue = band_data['B02'].copy()
         
-        # Stack bands
-        rgb = np.stack([red, green, blue], axis=2)
+        # Get dimensions
+        height, width = red.shape
         
         # Better normalization with individual band stretching
         if contrast_stretch:
             # Normalize each band separately for better color representation
-            rgb_norm = np.zeros_like(rgb, dtype=np.float32)
+            red_norm = np.zeros_like(red, dtype=np.float32)
+            green_norm = np.zeros_like(green, dtype=np.float32)
+            blue_norm = np.zeros_like(blue, dtype=np.float32)
             
-            for i in range(3):
-                band = rgb[:,:,i]
-                # Remove extreme outliers before calculating percentiles
-                p_low, p_high = np.percentile(band[band > 0], (0.5, 99.5))
-                # Apply linear stretch with clip
-                rgb_norm[:,:,i] = np.clip((band - p_low) / (p_high - p_low), 0, 1)
-                
-            # Apply gamma correction to enhance midtones
-            gamma = 0.8  # Values < 1 brighten the image
-            rgb_norm = np.power(rgb_norm, gamma)
+            # Remove extreme outliers before calculating percentiles
+            p_low_r, p_high_r = np.percentile(red[red > 0], (0.5, 99.5))
+            p_low_g, p_high_g = np.percentile(green[green > 0], (0.5, 99.5))
+            p_low_b, p_high_b = np.percentile(blue[blue > 0], (0.5, 99.5))
+            
+            # Apply linear stretch with clip
+            red_norm = np.clip((red - p_low_r) / (p_high_r - p_low_r), 0, 1)
+            green_norm = np.clip((green - p_low_g) / (p_high_g - p_low_g), 0, 1)
+            blue_norm = np.clip((blue - p_low_b) / (p_high_b - p_low_b), 0, 1)
+            
+            # Apply gamma correction
+            gamma = 0.8
+            red_norm = np.power(red_norm, gamma)
+            green_norm = np.power(green_norm, gamma)
+            blue_norm = np.power(blue_norm, gamma)
         else:
-            # Simple normalization (legacy method)
-            p_low, p_high = np.percentile(rgb, (2, 98))
-            rgb_norm = np.clip((rgb - p_low) / (p_high - p_low), 0, 1)
-        
-        # Convert to 8-bit for saving
-        rgb_8bit = (rgb_norm * 255).astype(np.uint8)
-        
-        # Create figure with higher DPI for interpolation
-        height, width = rgb.shape[:2]
-        fig_size = (width * scale_factor / 100, height * scale_factor / 100)  # in inches
-        
-        plt.figure(figsize=fig_size)
-        plt.imshow(rgb_8bit, interpolation='lanczos')  # Use bicubic interpolation for smoother result
-        plt.title("RGB Composite (B4, B3, B2)")
-        plt.axis('off')
-        
-        # Save with higher resolution
-        dpi = 300 * scale_factor
-        plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=dpi)
-        plt.close()
-        
-        print(f"Enhanced RGB preview saved to {save_path} with {scale_factor}x resolution")
-        
-        # Also save a version using PIL for direct pixel control (no matplotlib artifacts)
-        try:
-            from PIL import Image, ImageEnhance
+            # Simple normalization
+            p_low_r, p_high_r = np.percentile(red, (2, 98))
+            p_low_g, p_high_g = np.percentile(green, (2, 98))
+            p_low_b, p_high_b = np.percentile(blue, (2, 98))
             
-            # Create PIL image
-            pil_img = Image.fromarray(rgb_8bit)
+            red_norm = np.clip((red - p_low_r) / (p_high_r - p_low_r), 0, 1)
+            green_norm = np.clip((green - p_low_g) / (p_high_g - p_low_g), 0, 1)
+            blue_norm = np.clip((blue - p_low_b) / (p_high_b - p_low_b), 0, 1)
+        
+        # Convert to a scale appropriate for GeoTIFF storage (0-1 float32)
+        red_out = red_norm.astype(np.float32)
+        green_out = green_norm.astype(np.float32)
+        blue_out = blue_norm.astype(np.float32)
+        
+        # Update file extension to .tiff if needed
+        if not save_path.endswith(('.tif', '.tiff')):
+            save_path = save_path.replace('.png', '.tiff')
+        
+        # Save as GeoTIFF
+        with rasterio.open(
+            save_path, 'w',
+            driver='GTiff',
+            height=height,
+            width=width,
+            count=3,
+            dtype=np.float32,
+            crs=crs,
+            transform=transform
+        ) as dst:
+            dst.write(red_out, 1)
+            dst.write(green_out, 2)
+            dst.write(blue_out, 3)
             
-            # Resize with high-quality interpolation
-            new_size = (width * scale_factor, height * scale_factor)
-            pil_img = pil_img.resize(new_size, Image.BICUBIC)
+            # Set band descriptions
+            dst.set_band_description(1, 'Red')
+            dst.set_band_description(2, 'Green')
+            dst.set_band_description(3, 'Blue')
             
-            # Enhance contrast and color
-            enhancer = ImageEnhance.Contrast(pil_img)
-            pil_img = enhancer.enhance(1.2)  # Slightly increase contrast
-            
-            enhancer = ImageEnhance.Color(pil_img)
-            pil_img = enhancer.enhance(1.3)  # Boost color saturation
-            
-            # Save PIL version
-            pil_save_path = save_path.replace('.png', '_enhanced.png')
-            pil_img.save(pil_save_path, format='PNG')
-            print(f"PIL-enhanced RGB preview saved to {pil_save_path}")
-            
-        except ImportError:
-            print("PIL not available, skipping enhanced image generation")
+            # Add metadata
+            dst.update_tags(
+                created=datetime.now().isoformat(),
+                description='RGB Composite (B04, B03, B02)',
+                source_bands='B04,B03,B02'
+            )
+        
+        print(f"RGB GeoTIFF saved to {save_path}")
     else:
         print("Required bands for RGB preview are not available")
 
-def create_ndvi_image(band_data, save_path):
+def create_ndvi_image(band_data, save_path, transform, crs):
     """
-    Create and save an NDVI image (normalized difference vegetation index).
+    Create and save an NDVI image as GeoTIFF with spatial reference.
     """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
     # NDVI = (NIR - RED) / (NIR + RED)
     nir = band_data['B08'].astype(np.float32)
     red = band_data['B04'].astype(np.float32)
+    
+    # Get dimensions
+    height, width = nir.shape
 
     # Prevent division by zero by adding a small constant
     ndvi = (nir - red) / (nir + red + 1e-6)
+    
+    # Keep NDVI in original scale [-1, 1] for GeoTIFF
+    # Update file extension to .tiff if needed
+    if not save_path.endswith(('.tif', '.tiff')):
+        save_path = save_path.replace('.png', '.tiff')
+    
+    # Save as GeoTIFF
+    with rasterio.open(
+        save_path, 'w',
+        driver='GTiff',
+        height=height,
+        width=width,
+        count=1,
+        dtype=np.float32,
+        crs=crs,
+        transform=transform
+    ) as dst:
+        dst.write(ndvi, 1)
+        
+        # Set band description
+        dst.set_band_description(1, 'NDVI')
+        
+        # Add metadata
+        dst.update_tags(
+            created=datetime.now().isoformat(),
+            description='Normalized Difference Vegetation Index (NDVI)',
+            source_bands='B08,B04',
+            formula='(NIR - RED) / (NIR + RED)'
+        )
+    
+    print(f"NDVI GeoTIFF saved to {save_path}")
 
-    # Scale NDVI from [-1, 1] to [0, 1] for display
-    ndvi_display = (ndvi + 1) / 2
-    ndvi_display = np.clip(ndvi_display, 0, 1)
 
-    plt.figure(figsize=(10, 8))
-    plt.imshow(ndvi_display, cmap='RdYlGn')
-    plt.axis('off')
-    plt.savefig(save_path, bbox_inches='tight', dpi=300)
-    plt.close()
-
-    print(f"NDVI image saved to {save_path}")
-
-
-def create_false_color_composite(band_data, save_path, bands=None):
+def create_false_color_composite(band_data, save_path, transform, crs, bands=None):
     """
-    Create a false color composite image using specified bands
+    Create a false color composite image using specified bands and save as GeoTIFF
     
     Parameters:
     -----------
@@ -445,6 +471,10 @@ def create_false_color_composite(band_data, save_path, bands=None):
         Dictionary containing band data
     save_path : str
         Path to save the false color image
+    transform : Affine
+        Spatial transform information
+    crs : str or CRS
+        Coordinate Reference System
     bands : list, optional
         List of three bands to use for R, G, B channels
         Defaults to ['B08', 'B04', 'B03'] for NIR false color
@@ -455,46 +485,81 @@ def create_false_color_composite(band_data, save_path, bands=None):
         
     if all(band in band_data for band in bands):
         # Extract the three bands
-        r_band = band_data[bands[0]]
-        g_band = band_data[bands[1]]
-        b_band = band_data[bands[2]]
+        r_band = band_data[bands[0]].copy()
+        g_band = band_data[bands[1]].copy()
+        b_band = band_data[bands[2]].copy()
         
-        # Stack bands
-        rgb = np.stack([r_band, g_band, b_band], axis=2)
+        # Get dimensions
+        height, width = r_band.shape
         
-        # Normalize for display
-        p_low, p_high = np.percentile(rgb, (2, 98))
-        rgb_norm = np.clip((rgb - p_low) / (p_high - p_low) * 255, 0, 255).astype(np.uint8)
+        # Normalize for better visualization
+        r_norm = np.zeros_like(r_band, dtype=np.float32)
+        g_norm = np.zeros_like(g_band, dtype=np.float32)
+        b_norm = np.zeros_like(b_band, dtype=np.float32)
         
-        # Save with matplotlib
-        plt.figure(figsize=(10, 10))
-        plt.imshow(rgb_norm)
-        plt.axis('off')
-        plt.savefig(save_path, bbox_inches='tight', dpi=300)
-        plt.close()
+        # Remove extreme outliers before calculating percentiles
+        p_low_r, p_high_r = np.percentile(r_band[r_band > 0], (0.5, 99.5))
+        p_low_g, p_high_g = np.percentile(g_band[g_band > 0], (0.5, 99.5))
+        p_low_b, p_high_b = np.percentile(b_band[b_band > 0], (0.5, 99.5))
         
-        print(f"False color image saved to {save_path}")
+        # Apply linear stretch with clip
+        r_norm = np.clip((r_band - p_low_r) / (p_high_r - p_low_r), 0, 1)
+        g_norm = np.clip((g_band - p_low_g) / (p_high_g - p_low_g), 0, 1)
+        b_norm = np.clip((b_band - p_low_b) / (p_high_b - p_low_b), 0, 1)
+        
+        # Update file extension to .tiff if needed
+        if not save_path.endswith(('.tif', '.tiff')):
+            save_path = save_path.replace('.png', '.tiff')
+        
+        # Save as GeoTIFF
+        with rasterio.open(
+            save_path, 'w',
+            driver='GTiff',
+            height=height,
+            width=width,
+            count=3,
+            dtype=np.float32,
+            crs=crs,
+            transform=transform
+        ) as dst:
+            dst.write(r_norm, 1)
+            dst.write(g_norm, 2)
+            dst.write(b_norm, 3)
+            
+            # Set band descriptions
+            dst.set_band_description(1, bands[0])
+            dst.set_band_description(2, bands[1])
+            dst.set_band_description(3, bands[2])
+            
+            # Add metadata
+            dst.update_tags(
+                created=datetime.now().isoformat(),
+                description=f'False Color Composite ({bands[0]}, {bands[1]}, {bands[2]})',
+                source_bands=','.join(bands)
+            )
+        
+        print(f"False color GeoTIFF saved to {save_path}")
     else:
         print(f"Required bands for false color composite ({', '.join(bands)}) are not available")
 
 
-if __name__ == "__main__":
-    # Example usage
-    # create bounding coordinates from Left: 73.1311899620134, Bottom: 33.67239849081358, Right: 73.13207589901494, Top: 33.673493285008185
-    polygon_coords = [
-        [73.1311899620134, 33.67239849081358],
-        [73.13207589901494, 33.67239849081358],
-        [73.13207589901494, 33.673493285008185],
-        [73.1311899620134, 33.673493285008185],
-        [73.1311899620134, 33.67239849081358]
-    ]
-    username = "test"
-    name = "test_field"
+# if __name__ == "__main__":
+#     # Example usage
+#     # create bounding coordinates from Left: 73.1311899620134, Bottom: 33.67239849081358, Right: 73.13207589901494, Top: 33.673493285008185
+#     polygon_coords = [
+#         [73.1311899620134, 33.67239849081358],
+#         [73.13207589901494, 33.67239849081358],
+#         [73.13207589901494, 33.673493285008185],
+#         [73.1311899620134, 33.673493285008185],
+#         [73.1311899620134, 33.67239849081358]
+#     ]
+#     username = "test"
+#     name = "test_field"
     
-    # Fetch the imagery
-    result = fetch_sentinel_imagery(polygon_coords, username, name)
+#     # Fetch the imagery
+#     result = fetch_sentinel_imagery(polygon_coords, username, name)
     
-    if isinstance(result, dict) and "error" in result:
-        print(f"Error: {result['error']}")
-    else:
-        print(f"Imagery successfully saved to: {result}")
+#     if isinstance(result, dict) and "error" in result:
+#         print(f"Error: {result['error']}")
+#     else:
+#         print(f"Imagery successfully saved to: {result}")

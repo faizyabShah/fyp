@@ -1,13 +1,17 @@
 {
   "dependencies": {
+    "@geoman-io/leaflet-geoman-free": "^2.18.3",
     "@turf/turf": "^7.2.0",
     "bootstrap": "^5.3.3",
     "esri-leaflet-geocoder": "^3.1.5",
     "fs": "^0.0.1-security",
+    "georaster": "^1.6.0",
+    "georaster-layer-for-leaflet": "^3.10.0",
     "leaflet": "^1.9.4",
     "leaflet-control-geocoder": "^3.1.0",
     "leaflet-draw": "^1.0.4",
     "llamaai": "^1.0.4",
+    "proj4": "^2.15.0",
     "react-router-dom": "^6.27.0",
     "react-scroll": "^1.9.3"
   }

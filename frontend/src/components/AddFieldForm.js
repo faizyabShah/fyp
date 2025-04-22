@@ -14,10 +14,6 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
 
     const closeError = () => setError(null);
 
-    const consolee = () => {
-        console.log(coordinates);
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 

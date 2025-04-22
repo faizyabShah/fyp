@@ -247,13 +247,13 @@ def process_sentinel_imagery(polygon_coords, username, name, id):
             )
         
     process_with_mask(
-        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
-        output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
+        tiff_dir=f"C:/New folder/backend/app/data{username}_{name}",
+        output_dir=f"C:/New folder/backend/app/data/{username}_{name}",
     )
 
         
     generate_predictions_and_save_csv(
-        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
+        tiff_dir=f"C:C:/New folder/sat_data/{username}_{name}",
         output_dir=f"C:/New folder/sat_data/{username}_{name}",
     )
     

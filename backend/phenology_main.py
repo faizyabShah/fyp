@@ -222,27 +222,27 @@ def process_with_mask(
         pixel_mask=pixel_mask
     )
 
-if __name__ == "__main__":
-    # Example usage:
-    tiff_dir = r"C:\Users\PMYLS\Downloads\satellite code\sentinel-data-rotated"
-    model_path = "./model/best.pth"
-    output_dir = "./results"
+# if __name__ == "__main__":
+#     # Example usage:
+#     tiff_dir = r"C:\Users\PMYLS\Downloads\satellite code\sentinel-data-rotated"
+#     model_path = "./model/best.pth"
+#     output_dir = "./results"
     
-    # Option 1: Process the entire TIFF (might be slow for large images)
-    #csv_path, tiff_path, viz_path = process_entire_tiff(tiff_dir, output_dir, model_path)
+#     # Option 1: Process the entire TIFF (might be slow for large images)
+#     #csv_path, tiff_path, viz_path = process_entire_tiff(tiff_dir, output_dir, model_path)
     
-    # Option 2: Process every 5th pixel to reduce computation
-    #csv_path, tiff_path, viz_path = process_entire_tiff(tiff_dir, output_dir, model_path, skip_pixels=5)
+#     # Option 2: Process every 5th pixel to reduce computation
+#     #csv_path, tiff_path, viz_path = process_entire_tiff(tiff_dir, output_dir, model_path, skip_pixels=5)
     
-    # Option 3: Process only pixels within a crop mask
-    csv_path, tiff_path, viz_path = process_with_mask(
-        tiff_dir, 
-        model_path, 
-        output_dir,
-        mask_file="./data/crop_mask.tif"
-    )
+#     # Option 3: Process only pixels within a crop mask
+#     csv_path, tiff_path, viz_path = process_with_mask(
+#         tiff_dir, 
+#         model_path, 
+#         output_dir,
+#         mask_file="./data/crop_mask.tif"
+#     )
     
-    print("Processing complete!")
-    print(f"CSV results: {csv_path}")
-    print(f"TIFF results: {tiff_path}")
-    print(f"Visualization: {viz_path}")
+#     print("Processing complete!")
+#     print(f"CSV results: {csv_path}")
+#     print(f"TIFF results: {tiff_path}")
+#     print(f"Visualization: {viz_path}")

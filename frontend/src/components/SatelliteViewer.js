@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { IoIosRefresh } from 'react-icons/io';
+import ReadOnlyDisplayMap from './ReadOnlyDisplayMap'; // Import the updated ReadOnlyMap component
 import "../styles/SatelliteViewer.css";
 
 const SatelliteViewer = ({ selectedField, token }) => {
   const [satelliteData, setSatelliteData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState('preview'); // Default view
+  const [activeView, setActiveView] = useState('NDVI'); // Default view
   const [error, setError] = useState(null);
 
   const viewOptions = [
     { id: 'preview', label: 'Enhanced Preview', legendTitle: 'True Color Enhanced' },
     { id: 'false_color', label: 'False Color', legendTitle: 'False Color Composite' },
     { id: 'NDVI', label: 'NDVI', legendTitle: 'Normalized Difference Vegetation Index' },
-    { id: 'phenolog', label: 'Phenology', legendTitle: 'Crop Growth Stage' }
+    { id: 'phenology', label: 'Phenology', legendTitle: 'Crop Growth Stage' }
   ];
 
   const fetchSatelliteData = async () => {
@@ -31,6 +32,7 @@ const SatelliteViewer = ({ selectedField, token }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data)
         setSatelliteData(data);
       } else {
         const errorData = await response.json();
@@ -52,31 +54,14 @@ const SatelliteViewer = ({ selectedField, token }) => {
     }
   }, [selectedField]);
 
-  const getImagePath = () => {
-    if (!satelliteData) return null;
-    
-    const { data_dir, date } = satelliteData;
-    
-    switch (activeView) {
-      case 'preview':
-        return `./media/${data_dir}/${date}_preview_enhanced.png`;
-      case 'false_color':
-        return `./media/${data_dir}/${date}_false_color.png`;
-      case 'NDVI':
-        return `./media/${data_dir}/${date}_NDVI.png`;
-      case 'phenolog':
-        return `./media/${data_dir}/phenology_visualization_${date}.png`;
-      default:
-        return `./media/${data_dir}/${date}_preview_enhanced.png`;
-    }
-  };
-
   const renderSideLegend = () => {
     if (!activeView || !satelliteData) return null;
     
     const currentView = viewOptions.find(option => option.id === activeView);
     
-    if (activeView === 'phenolog') {
+    if (activeView === 'phenology') {
+
+
       const phenologyStages = [
         { name: 'Germination', color: '#FF0000' },
         { name: 'Tillering', color: '#FF8033' },
@@ -179,11 +164,12 @@ const SatelliteViewer = ({ selectedField, token }) => {
       {!loading && satelliteData ? (
         <div className="satellite-content-wrapper">
           <div className="satellite-content-main">
-            <div className="satellite-image-container">
-              <img 
-                src={getImagePath()} 
-                alt={`Satellite ${activeView} view`} 
-                className="img-fluid satellite-image"
+            {/* Replace static image with ReadOnlyMap component */}
+            <div className="satellite-map-container">
+              <ReadOnlyDisplayMap 
+                selectedField={selectedField} 
+                satelliteData={satelliteData} 
+                activeView={activeView} 
               />
             </div>
           </div>

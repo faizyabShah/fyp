@@ -107,7 +107,6 @@ const LeafletMap = ({ setCoordinates, setArea }) => {
         // Convert to hectares (1 hectare = 10,000 square meters)
         const areaHectares = areaSqMeters / 10000;
         
-        console.log('Polygon area:', areaHectares.toFixed(2), 'hectares');
         
         setPolygon(latlngs);
         setCoordinates(latlngs);
@@ -128,7 +127,6 @@ const LeafletMap = ({ setCoordinates, setArea }) => {
           const areaSqMeters = calculatePolygonArea(latlngs);
           const areaHectares = areaSqMeters / 10000;
           
-          console.log('Updated polygon area:', areaHectares.toFixed(2), 'hectares');
           
           setPolygon(latlngs);
           setCoordinates(latlngs);

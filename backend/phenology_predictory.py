@@ -171,17 +171,17 @@ def predict_phenological_stage_one_pixel(
     return predicted_stage.item(), dates
 
 # Example usage:
-if __name__ == "__main__":
-    # Example parameters (adjust these as needed)
-    tiff_folder = "./data/sentinel_data"
-    pixel_coordinate = (5, 5)  # Example (x, y) coordinate
+# if __name__ == "__main__":
+#     # Example parameters (adjust these as needed)
+#     tiff_folder = "./data/sentinel_data"
+#     pixel_coordinate = (5, 5)  # Example (x, y) coordinate
 
-    model = PhenologyRNNModel()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    loaded_checkpoint = torch.load('./data/model_wieghts/narc_satellite_phen_model.pth', map_location=device)
-    model.load_state_dict(loaded_checkpoint['model'])
+#     model = PhenologyRNNModel()
+#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#     loaded_checkpoint = torch.load('./data/model_wieghts/narc_satellite_phen_model.pth', map_location=device)
+#     model.load_state_dict(loaded_checkpoint['model'])
 
-    predicted_stage, dates = predict_phenological_stage_one_pixel(tiff_folder, pixel_coordinate, model, device)
-    if predicted_stage is not None:
-        print("Predicted Phenological Stage:", predicted_stage, PHENOLOGY_STAGES[predicted_stage])
-        print("Feature Dates:", len(dates), dates)
+#     predicted_stage, dates = predict_phenological_stage_one_pixel(tiff_folder, pixel_coordinate, model, device)
+#     if predicted_stage is not None:
+#         print("Predicted Phenological Stage:", predicted_stage, PHENOLOGY_STAGES[predicted_stage])
+#         print("Feature Dates:", len(dates), dates)s
