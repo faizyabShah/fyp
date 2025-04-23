@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoIosRefresh } from 'react-icons/io';
-import ReadOnlyDisplayMap from './ReadOnlyDisplayMap'; // Import the updated ReadOnlyMap component
+import ReadOnlyDisplayMap from './ReadOnlyDisplayMap';
 import "../styles/SatelliteViewer.css";
 
 const SatelliteViewer = ({ selectedField, token }) => {
@@ -32,7 +32,6 @@ const SatelliteViewer = ({ selectedField, token }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data)
         setSatelliteData(data);
       } else {
         const errorData = await response.json();
@@ -54,14 +53,12 @@ const SatelliteViewer = ({ selectedField, token }) => {
     }
   }, [selectedField]);
 
-  const renderSideLegend = () => {
+  const renderLegend = () => {
     if (!activeView || !satelliteData) return null;
     
     const currentView = viewOptions.find(option => option.id === activeView);
     
     if (activeView === 'phenology') {
-
-
       const phenologyStages = [
         { name: 'Germination', color: '#FF0000' },
         { name: 'Tillering', color: '#FF8033' },
@@ -73,13 +70,13 @@ const SatelliteViewer = ({ selectedField, token }) => {
       ];
       
       return (
-        <div className="side-legend-container">
-          <h5 className="mb-3">{currentView.legendTitle}</h5>
-          <div className="d-flex flex-column">
+        <div className="legend-overlay">
+          <h4 className="legend-header">{currentView.legendTitle}</h4>
+          <div className="legend-content">
             {phenologyStages.map((stage, index) => (
-              <div key={index} className="d-flex align-items-center mb-3">
+              <div key={index} className="legend-item" style={{background: 'transparent'}}>
                 <div className="legend-color" style={{ backgroundColor: stage.color }}></div>
-                <span className="ms-2">{stage.name}</span>
+                <span className="legend-item-title" style={{background: 'transparent'}}>{stage.name}</span>
               </div>
             ))}
           </div>
@@ -94,16 +91,16 @@ const SatelliteViewer = ({ selectedField, token }) => {
       ];
       
       return (
-        <div className="side-legend-container">
-          <h5 className="mb-2">{currentView.legendTitle}</h5>
-          <p className="text-muted mb-3">Near-infrared reflectance highlights plant health and moisture</p>
-          <div className="false-color-legend">
+        <div className="legend-overlay">
+          <h4 className="legend-header">{currentView.legendTitle}</h4>
+          <p className="legend-subtitle">Near-infrared reflectance highlights plant health and moisture</p>
+          <div className="legend-content">
             {falseColorElements.map((element, index) => (
-              <div key={index} className="d-flex align-items-center mb-3">
+              <div key={index} className="legend-item" style={{background: 'transparent'}}>
                 <div className="legend-color" style={{ backgroundColor: element.color }}></div>
-                <div className="ms-2">
-                  <strong>{element.name}</strong>
-                  <div className="small text-muted">{element.description}</div>
+                <div className="legend-item-text" style={{background: 'transparent'}}>
+                  <div className="legend-item-title" style={{background: 'transparent'}}>{element.name}</div>
+                  <div className="legend-item-desc" style={{background: 'transparent'}}>{element.description}</div>
                 </div>
               </div>
             ))}
@@ -112,22 +109,22 @@ const SatelliteViewer = ({ selectedField, token }) => {
       );
     } else if (activeView === 'NDVI') {
       return (
-        <div className="side-legend-container">
-          <h5 className="mb-3">{currentView.legendTitle}</h5>
+        <div className="legend-overlay">
+          <h4 className="legend-header">{currentView.legendTitle}</h4>
           <div className="ndvi-container">
             <div className="ndvi-vertical-gradient"></div>
             <div className="ndvi-labels">
-              <span>High Vigor</span>
-              <span className="mt-auto">Low Vigor</span>
+              <span style={{background: 'transparent'}}>High Vigor</span>
+              <span className="mt-auto" style={{background: 'transparent'}}>Low Vigor</span>
             </div>
           </div>
         </div>
       );
     } else {
       return (
-        <div className="side-legend-container">
-          <h5 className="mb-2">{currentView.legendTitle}</h5>
-          <p className="text-muted mb-0">
+        <div className="legend-overlay">
+          <h4 className="legend-header">{currentView.legendTitle}</h4>
+          <p className="legend-subtitle">
             Natural color image with enhanced contrast and clarity
           </p>
         </div>
@@ -136,10 +133,10 @@ const SatelliteViewer = ({ selectedField, token }) => {
   };
 
   return (
-    <div className="box-cont p-3">
-      <div className="satellite-header d-flex justify-content-between align-items-center mb-3">
+    <div className="satellite-viewer-container">
+      <div className="satellite-header d-flex justify-content-between align-items-center">
         <button 
-          className="btn btn-sm btn-outline-secondary"
+          className="refresh-button"
           onClick={fetchSatelliteData}
           disabled={loading}
         >
@@ -147,58 +144,48 @@ const SatelliteViewer = ({ selectedField, token }) => {
         </button>
       </div>
 
-      <div className="satellite-toggle-container mb-3">
-        <div className="button-groupp btn-group">
-          {viewOptions.map(option => (
-            <button
-              key={option.id}
-              className={`btn ${activeView === option.id ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setActiveView(option.id)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+      <div className="view-options-container">
+        {viewOptions.map(option => (
+          <button
+            key={option.id}
+            className={`view-option ${activeView === option.id ? 'active' : ''}`}
+            onClick={() => setActiveView(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
 
-      {!loading && satelliteData ? (
-        <div className="satellite-content-wrapper">
-          <div className="satellite-content-main">
-            {/* Replace static image with ReadOnlyMap component */}
-            <div className="satellite-map-container">
+      <div className="satellite-map-container">
+        {!loading && satelliteData ? (
+          <>
+            {/* Make sure legend is rendered BEFORE the map inner to ensure proper z-index stacking */}
+            {renderLegend()}
+            <div className="satellite-map-inner">
               <ReadOnlyDisplayMap 
                 selectedField={selectedField} 
                 satelliteData={satelliteData} 
                 activeView={activeView} 
               />
             </div>
-          </div>
-          <div className="satellite-content-side">
-            {renderSideLegend()}
-            <div className="text-end mt-2">
-              <small className="text-muted">
-                Last updated: {satelliteData.date}
-              </small>
+            <div className="last-updated">
+              Last updated: {satelliteData.date}
+            </div>
+          </>
+        ) : loading ? (
+          <div className="loading-container">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="satellite-content">
-          {loading ? (
-            <div className="d-flex justify-content-center align-items-center p-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center p-5">
-              <p className="text-grey mb-0">
-                {error || "Satellite imagery is not yet available for this field."}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+        ) : (
+          <div className="error-container">
+            <p className="error-message">
+              {error || "Satellite imagery is not yet available for this field."}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

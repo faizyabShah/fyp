@@ -6,7 +6,6 @@ import SatelliteViewer from '../components/SatelliteViewer'; // Import the new c
 import RecommendationDisplay from '../components/RecommendationDisplay';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { use } from 'react';
 
 const Stats = ({
   userName,

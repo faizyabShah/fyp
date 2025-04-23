@@ -8,7 +8,6 @@ import proj4 from 'proj4';
 
 const wgs84ToUTM = proj4('EPSG:4326', 'EPSG:32643');
 
-
 function parseLatLngString(str) {
   return str
     .replace(/LatLng\(/g, "")
@@ -78,40 +77,47 @@ const createGeoJSONPolygon = (coords) => {
 };
 
 // Component to display hover information
-// Modified HoverInfo component to properly display NDVI and phenology values
 const HoverInfo = ({ map, ndviData, phenologyData, polygonCoords }) => {
-  const [infoControl, setInfoControl] = useState(null);
   const [ndviRaster, setNdviRaster] = useState(null);
   const [phenologyRaster, setPhenologyRaster] = useState(null);
+  const [tooltipDiv, setTooltipDiv] = useState(null);
   
-  // Create info control
+  // Create tooltip element that follows cursor
   useEffect(() => {
-    if (!infoControl && map) {
-      const control = L.control({ position: 'bottomright' });
-      
-      control.onAdd = () => {
-        const div = L.DomUtil.create('div', 'hover-info');
-        div.style.background = 'rgba(255, 255, 255, 0.9)';
-        div.style.padding = '6px 8px';
-        div.style.border = '1px solid #ccc';
-        div.style.borderRadius = '4px';
-        div.style.fontFamily = 'Arial, sans-serif';
-        div.style.fontSize = '12px';
-        div.style.display = 'none'; // Initially hidden
-        div.innerHTML = 'Hover over a point';
-        return div;
-      };
-      
-      control.addTo(map);
-      setInfoControl(control);
-    }
+    if (!map) return;
+    
+    // Create the tooltip div
+    const div = L.DomUtil.create('div', 'map-tooltip');
+    div.style.position = 'absolute';
+    div.style.padding = '10px 14px';
+    div.style.background = 'rgba(0, 0, 0, 0.65)';
+    div.style.backdropFilter = 'blur(10px)';
+    div.style.webkitBackdropFilter = 'blur(10px)';
+    div.style.color = 'white';
+    div.style.borderRadius = '8px';
+    div.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+    div.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+    div.style.fontFamily = 'Arial, sans-serif';
+    div.style.fontSize = '12px';
+    div.style.lineHeight = '1.5';
+    div.style.zIndex = '1000';
+    div.style.pointerEvents = 'none'; // Prevents the tooltip from blocking mouse events
+    div.style.display = 'none'; // Initially hidden
+    div.style.transition = 'transform 0.1s ease-out';
+    div.style.transform = 'translate3d(10px, 10px, 0)'; // Offset from cursor
+    div.style.minWidth = '200px';
+    div.style.textShadow = '0 1px 2px rgba(0, 0, 0, 0.2)';
+    
+    // Add to map container
+    map.getContainer().appendChild(div);
+    setTooltipDiv(div);
     
     return () => {
-      if (infoControl) {
-        infoControl.remove();
+      if (div && div.parentNode) {
+        div.parentNode.removeChild(div);
       }
     };
-  }, [map, infoControl]);
+  }, [map]);
   
   // Load and process raster data separately from display layers
   useEffect(() => {
@@ -128,9 +134,6 @@ const HoverInfo = ({ map, ndviData, phenologyData, polygonCoords }) => {
           
           // Parse the georaster
           const ndviGeoRaster = await parseGeoraster(ndviArrayBuffer);
-          console.log("YAYYYYYYY")
-          console.log(ndviGeoRaster.projection);  // Log the projection info to check
-
           setNdviRaster(ndviGeoRaster);
         }
         
@@ -157,7 +160,7 @@ const HoverInfo = ({ map, ndviData, phenologyData, polygonCoords }) => {
   
   // Set up mousemove event to display values
   useEffect(() => {
-    if (!map || !infoControl || !polygonCoords || polygonCoords.length === 0) return;
+    if (!map || !tooltipDiv || !polygonCoords || polygonCoords.length === 0) return;
     
     // Convert polygon coordinates to Leaflet polygon for point-in-polygon check
     const polygon = L.polygon(polygonCoords);
@@ -165,21 +168,40 @@ const HoverInfo = ({ map, ndviData, phenologyData, polygonCoords }) => {
     const handleMouseMove = (e) => {
       const { lat, lng } = e.latlng;
       
+      // Position tooltip at mouse location
+      const containerPoint = e.containerPoint;
+      tooltipDiv.style.left = `${containerPoint.x + 15}px`;
+      tooltipDiv.style.top = `${containerPoint.y - 10}px`;
+      
       // Check if point is inside polygon
       if (polygon.getBounds().contains(e.latlng) && pointInPolygon([lat, lng], polygonCoords)) {
-        const infoDiv = infoControl.getContainer();
-        
         let ndviValue = "N/A";
         let phenologyValue = "N/A";
         let phenologyStage = "N/A";
+        let ndviColor = "transparent";
         
         // Get raster values directly from the raster data
         const updateDisplay = () => {
-          infoDiv.style.display = 'block';
-          infoDiv.innerHTML = `
-            <strong>Position:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
-            <strong>NDVI:</strong> ${ndviValue}<br>
-            <strong>Phenology:</strong> ${phenologyValue} (${phenologyStage})
+          tooltipDiv.style.display = 'block';
+          
+          const ndviColorStyle = ndviValue !== "N/A" 
+            ? `<div style="display: inline-block; width: 12px; height: 12px; border-radius: 3px; background-color: ${ndviColor}; margin-right: 5px; vertical-align: middle;"></div>` 
+            : '';
+          
+          tooltipDiv.innerHTML = `
+            <div style="margin-bottom: 8px; font-weight: bold; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px;">Field Data</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: rgba(255,255,255,0.8);">Position:</span>
+              <span>${lat.toFixed(4)}, ${lng.toFixed(4)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: rgba(255,255,255,0.8);">NDVI:</span>
+              <span>${ndviColorStyle}${ndviValue}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: rgba(255,255,255,0.8);">Phenology:</span>
+              <span>${phenologyValue} (${phenologyStage})</span>
+            </div>
           `;
         };
         
@@ -194,6 +216,15 @@ const HoverInfo = ({ map, ndviData, phenologyData, polygonCoords }) => {
             
             if (valueAtPoint !== null && valueAtPoint !== ndviRaster.noDataValue) {
               ndviValue = valueAtPoint.toFixed(2);
+              
+              // Determine color based on NDVI value for the color indicator
+              if (valueAtPoint < -0.2) ndviColor = '#960000';
+              else if (valueAtPoint < 0) ndviColor = '#dc1414';
+              else if (valueAtPoint < 0.2) ndviColor = '#ffb432';
+              else if (valueAtPoint < 0.4) ndviColor = '#f0f032';
+              else if (valueAtPoint < 0.6) ndviColor = '#96f032';
+              else ndviColor = '#00b400';
+              
               updateDisplay();
             }
           } catch (error) {
@@ -231,24 +262,33 @@ const HoverInfo = ({ map, ndviData, phenologyData, polygonCoords }) => {
           }
         }
       } else {
-        // Hide info when outside polygon
-        infoControl.getContainer().style.display = 'none';
+        // Hide tooltip when outside polygon
+        tooltipDiv.style.display = 'none';
       }
     };
     
-    // Add event listener to map
+    // Add event listener to map for mouse movement
     map.on('mousemove', handleMouseMove);
+    
+    // Hide tooltip when mouse leaves the map
+    const handleMouseLeave = () => {
+      if (tooltipDiv) {
+        tooltipDiv.style.display = 'none';
+      }
+    };
+    
+    map.getContainer().addEventListener('mouseleave', handleMouseLeave);
     
     return () => {
       map.off('mousemove', handleMouseMove);
+      map.getContainer().removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [map, infoControl, polygonCoords, ndviRaster, phenologyRaster]);
+  }, [map, tooltipDiv, polygonCoords, ndviRaster, phenologyRaster]);
   
   return null;
 };
 
 // Helper function to get a value from a GeoRaster at a specific lat/lng
-// Modified getValueFromRaster function with proper coordinate transformation
 function getValueFromRaster(raster, lat, lng) {
   if (!raster) return null;
 
@@ -287,7 +327,7 @@ function pointInPolygon(point, polygon) {
   return inside;
 }
 
-// Modified GeoTIFFLayer component to use built-in mask functionality
+// GeoTIFFLayer component 
 const GeoTIFFLayer = ({ base64Data, activeView, polygonCoords }) => {
   const map = useMap();
   const [layer, setLayer] = useState(null);
@@ -379,16 +419,21 @@ const GeoTIFFLayer = ({ base64Data, activeView, polygonCoords }) => {
           };
         }
         
-        // Create GeoRaster layer with options
+        // Create GeoRaster layer with improved options for smooth rendering
         const options = {
           georaster: georaster,
           opacity: 1,
-          resolution: 256,
+          resolution: 512, // Increased from 256 for better resolution
           pixelValuesToColorFn: pixelValuesToColorFn,
-          resampleMethod: 'nearest',
+          resampleMethod: 'bicubic', // Changed from 'nearest' to 'bilinear' for smoother interpolation
           mask: geoJsonPolygon,
           mask_strategy: 'outside',
-          debugLevel: 0
+          debugLevel: 0,
+          // Add canvas rendering options
+          canvas: {
+            enableSmoothing: true, // Enable image smoothing on canvas
+            cacheable: true // Allow for caching to improve performance
+          }
         };
         
         const newLayer = new GeoRasterLayer(options);
@@ -490,7 +535,7 @@ const ReadOnlyDisplayMap = ({ selectedField, satelliteData, activeView }) => {
     <MapContainer
       center={[0, 0]}
       zoom={2}
-      style={{ height: "400px", width: "100%" }}
+      style={{ height: "600px", width: "100%" }}
       scrollWheelZoom={false} // disabled by default
     >
       {/* Base satellite imagery layer */}
@@ -523,18 +568,6 @@ const ReadOnlyDisplayMap = ({ selectedField, satelliteData, activeView }) => {
           opacity={0.7}
         />
       </Pane>
-
-      {/* Display polygon boundary */}
-      {polygonCoords.length > 0 && (
-        <Polygon 
-          pathOptions={{ 
-            color: "blue", 
-            weight: 2, 
-            fillOpacity: 0 // Transparent fill
-          }} 
-          positions={polygonCoords} 
-        />
-      )}
 
       {/* Map controls including hover info */}
       <MapControls 
