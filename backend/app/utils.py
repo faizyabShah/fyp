@@ -1,7 +1,6 @@
-from sentinelhub import DataCollection, SHConfig, SentinelHubRequest, CRS, BBox, MimeType, bbox_to_dimensions
+from sentinelhub import DataCollection, SHConfig, SentinelHubRequest, CRS, BBox, MimeType, bbox_to_dimensions, SentinelHubCatalog, filter_times
 import os
 import sys
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime, timedelta
 import numpy as np
 from PIL import Image
@@ -27,9 +26,9 @@ configuration = Config()
 DATA_FOLDER = configuration.BASE_DIR
 os.makedirs(DATA_FOLDER, exist_ok=True)
 
-def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_coverage=0.1):
+def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_date_str, max_cloud_coverage=0.03):
     """
-    Fetch Sentinel-2 imagery based on the provided polygon coordinates.
+    Fetch Sentinel-2 imagery based on the provided polygon coordinates for all images between start and end dates.
     
     Parameters:
     -----------
@@ -41,15 +40,15 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
         Name for creating the output directory
     start_date_str : str
         Start date for fetching imagery (YYYY-MM-DD)
-    days : int
-        Number of days to look ahead from start date
+    end_date_str : str
+        End date for fetching imagery (YYYY-MM-DD)
     max_cloud_coverage : float
         Maximum cloud coverage (0-1)
     
     Returns:
     --------
-    str or dict
-        Path to the saved image file or an error dictionary
+    bool or dict
+        True if successful or an error dictionary
     """
     # Compute bounding box from the polygon coordinates (assumes [lon, lat] points)
     print("FETCHING SENTINEL IMAGERY")
@@ -57,6 +56,7 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
     lats = [pt[1] for pt in polygon_coords]
     minx, miny, maxx, maxy = min(lons), min(lats), max(lons), max(lats)
     print('here')
+    
     # Create a transformer to convert from WGS84 to EPSG:32643
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:32643", always_xy=True)
     
@@ -66,22 +66,20 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
     
     # Create BBox object with EPSG:32643 CRS
     bbox = BBox(bbox=[utm_min_x, utm_min_y, utm_max_x, utm_max_y], crs=CRS.UTM_43N)
-    print("got bbxo")
-    # Define a time range
-    # end_date = datetime.now()
-    end_date = datetime.now() - timedelta(days=1)
-
-    # Calculate the start date based on the number of days
-    start_date = end_date - timedelta(days=days)
-    start_date_str = start_date.strftime('%Y-%m-%d')
-    end_date_str = end_date.strftime('%Y-%m-%d')
-
-
-    time_range = (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+    
+    # Create WGS84 BBox for catalog search
+    wgs84_bbox = BBox(bbox=[minx, miny, maxx, maxy], crs=CRS.WGS84)
+    print("got bbox")
+    
+    # Convert start_date_str and end_date_str to datetime objects
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    time_interval = (start_date_str, end_date_str)
     
     # Calculate dimensions at 10m resolution
     bbox_size = bbox_to_dimensions(bbox, resolution=10)
-    print("dimeed")
+    print("dimensions calculated")
+    
     # Check if dimensions are too large
     max_pixels = 4500 * 4500  # Reasonable maximum size to avoid memory issues
     if bbox_size[0] * bbox_size[1] > max_pixels:
@@ -90,6 +88,29 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
         new_height = int(bbox_size[1] * scale_factor)
         print(f"Warning: Image dimensions too large. Rescaling to {new_width}x{new_height}")
         bbox_size = (new_width, new_height)
+    
+    # Initialize the Sentinel Hub Catalog to get all available timestamps
+    catalog = SentinelHubCatalog(config=config)
+    
+    # Search for available data
+    search_iterator = catalog.search(
+        collection=DataCollection.SENTINEL2_L2A,
+        bbox=wgs84_bbox,
+        time=time_interval,
+        filter="eo:cloud_cover <= " + str(max_cloud_coverage * 100)  # Convert to percentage
+    )
+    
+    # Get all timestamps
+    all_timestamps = search_iterator.get_timestamps()
+    
+    if not all_timestamps:
+        return {"error": f"No Sentinel-2 data available for the period {start_date_str} to {end_date_str} with cloud coverage ≤ {max_cloud_coverage * 100}%"}
+    
+    print(f"Found {len(all_timestamps)} acquisition dates")
+    
+    # Filter unique acquisition times (e.g., within 1 hour difference)
+    unique_acquisitions = filter_times(all_timestamps, timedelta(hours=1))
+    print(f"After filtering: {len(unique_acquisitions)} unique acquisitions")
     
     # Define the Sentinel-2 bands we want to retrieve
     sentinel2_bands = {
@@ -145,26 +166,7 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
     }
     """
     
-    # Create a single request for all bands to ensure alignment
-    request = SentinelHubRequest(
-        evalscript=evalscript,
-        input_data=[
-            SentinelHubRequest.input_data(
-                data_collection=DataCollection.SENTINEL2_L2A,
-                time_interval=time_range,
-                maxcc=max_cloud_coverage,
-                mosaicking_order="leastCC"
-            )
-        ],
-        responses=[
-            SentinelHubRequest.output_response('default', MimeType.TIFF)
-        ],
-        bbox=bbox,
-        size=bbox_size,
-        config=config
-    )
-    
-    # Attempt to get metadata
+    # Metadata eval script
     metadata_script = """
     //VERSION=3
     function setup() {
@@ -194,126 +196,169 @@ def fetch_sentinel_imagery(polygon_coords, username, name, days=5, max_cloud_cov
         return [1.0];
     }
     """
-    print("someway in")
-    metadata_request = SentinelHubRequest(
-        evalscript=metadata_script,
-        input_data=[
-            SentinelHubRequest.input_data(
-                data_collection=DataCollection.SENTINEL2_L2A,
-                time_interval=time_range,
-                mosaicking_order='leastCC',
-                maxcc=max_cloud_coverage
-            )
-        ],
-        responses=[
-            SentinelHubRequest.output_response('default', MimeType.TIFF)
-        ],
-        bbox=bbox,
-        size=(1, 1),
-        config=config
-    )
     
-    # Get metadata
-    metadata = None
-    try:
-        metadata_result = metadata_request.get_data()[0]
-        if hasattr(metadata_result, 'metadata') and 'userData' in metadata_result.metadata:
-            metadata = metadata_result.metadata['userData']
-            print(f"Metadata successfully retrieved")
-        else:
-            print("Metadata structure not as expected")
-    except Exception as e:
-        print(f"Error retrieving metadata: {e}")
+    # Process each unique acquisition
+    success_count = 0
+    error_count = 0
     
-    # Fetch the data
-    try:
-        print("Retrieving all bands...")
-        data = request.get_data()
+    for timestamp in unique_acquisitions:
+        date_str = timestamp.strftime('%Y-%m-%d')
+        print(f"Processing date: {date_str}")
         
-        if not data or len(data) == 0:
-            return {"error": "No data returned from Sentinel Hub"}
+        # Create a single request for all bands to ensure alignment
+        request = SentinelHubRequest(
+            evalscript=evalscript,
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_collection=DataCollection.SENTINEL2_L2A,
+                    time_interval=(timestamp.strftime('%Y-%m-%d'), (timestamp + timedelta(days=1)).strftime('%Y-%m-%d')),
+                    maxcc=max_cloud_coverage,
+                    # mosaicking_order="leastCC"
+                )
+            ],
+            responses=[
+                SentinelHubRequest.output_response('default', MimeType.TIFF)
+            ],
+            bbox=bbox,
+            size=bbox_size,
+            config=config
+        )
         
-        # The data is returned as a multiband array
-        multiband_data = data[0]
-
-        print("non empty")
-        # Separate into individual bands
-        # The bands are in the order defined in the evalscript
-        band_order = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
-        band_data = {}
+        # Get metadata for this specific date
+        # metadata_request = SentinelHubRequest(
+        #     evalscript=metadata_script,
+        #     input_data=[
+        #         SentinelHubRequest.input_data(
+        #             data_collection=DataCollection.SENTINEL2_L2A,
+        #             time_interval=(timestamp.strftime('%Y-%m-%d'), (timestamp + timedelta(days=1)).strftime('%Y-%m-%d')),
+        #             # mosaicking_order='leastCC',
+        #             maxcc=max_cloud_coverage
+        #         )
+        #     ],
+        #     responses=[
+        #         SentinelHubRequest.output_response('default', MimeType.TIFF)
+        #     ],
+        #     bbox=bbox,
+        #     size=(1, 1),
+        #     config=config
+        # )
         
-        for i, band_name in enumerate(band_order):
-            band_data[band_name] = multiband_data[:, :, i]
-            print(f"Extracted band {band_name}")
+        # # Get metadata
+        # metadata = None
+        # try:
+        #     metadata_result = metadata_request.get_data()[0]
+        #     if hasattr(metadata_result, 'metadata') and 'userData' in metadata_result.metadata:
+        #         metadata = metadata_result.metadata['userData']
+        #         print(f"Metadata successfully retrieved for {date_str}")
+        #     else:
+        #         print(f"Metadata structure not as expected for {date_str}")
+        # except Exception as e:
+        #     print(f"Error retrieving metadata for {date_str}: {e}")
         
-        # Get dimensions
-        height, width = multiband_data.shape[:2]
-        
-        # Save as a multi-band GeoTIFF
-        image_path = os.path.join(directory_path, f"{end_date_str}.tiff")
-        
-        # Calculate the transform for the correct coordinates in UTM
-        transform = from_bounds(utm_min_x, utm_min_y, utm_max_x, utm_max_y, width, height)
-        crs = 'EPSG:32643'  # UTM zone 43N
-        
-        # Save the multiband image
+        # Fetch the data
         try:
-            with rasterio.open(
-                image_path, 'w', 
-                driver='GTiff', 
-                count=len(band_order), 
-                width=width, 
-                height=height,
-                dtype=multiband_data.dtype, 
-                crs='EPSG:32643',  # UTM zone 43N
-                transform=transform
-            ) as dst:
-                for i, band_name in enumerate(band_order):
-                    dst.write(band_data[band_name], i + 1)  # Write each band
-                    dst.set_band_description(i + 1, band_name)
-                
-                # Add basic file metadata
-                metadata_dict = {
-                    'date_generated': datetime.now().isoformat(),
-                    'start_date': start_date.isoformat(),
-                    'end_date': end_date.isoformat(),
-                    'band_order': ','.join(band_order)
-                }
-                
-                # Add any additional metadata from Sentinel Hub
-                if metadata:
-                    metadata_dict.update({
-                        'acquisition_date': metadata.get('acquisitionDate', 'Not available'),
-                        'cloud_coverage': str(metadata.get('cloudCoverage', 'Not available')),
-                    })
-                    if 'tiles' in metadata:
-                        metadata_dict['tiles'] = ','.join(metadata['tiles'])
-                
-                dst.update_tags(**metadata_dict)
+            print(f"Retrieving all bands for {date_str}...")
+            data = request.get_data()
             
-            print(f"Successfully saved {len(band_order)} bands to {image_path}")
+            if not data or len(data) == 0:
+                print(f"No data returned from Sentinel Hub for {date_str}")
+                error_count += 1
+                continue
             
-            # Generate and save RGB preview
-            preview_path = os.path.join(directory_path, f"{end_date_str}_preview.tiff")
-            create_rgb_preview(band_data, preview_path, transform, crs)
+            # The data is returned as a multiband array
+            multiband_data = data[0]
+            
+            print(f"Data retrieved for {date_str}")
+            # Separate into individual bands
+            # The bands are in the order defined in the evalscript
+            band_order = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
+            band_data = {}
+            
+            for i, band_name in enumerate(band_order):
+                band_data[band_name] = multiband_data[:, :, i]
+            
+            # Get dimensions
+            height, width = multiband_data.shape[:2]
+            
+            # Save as a multi-band GeoTIFF
+            image_path = os.path.join(directory_path, "imagery", f"{date_str}.tiff")
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            
+            # Calculate the transform for the correct coordinates in UTM
+            transform = from_bounds(utm_min_x, utm_min_y, utm_max_x, utm_max_y, width, height)
+            crs = 'EPSG:32643'  # UTM zone 43N
+            
+            # Save the multiband image
+            try:
+                with rasterio.open(
+                    image_path, 'w', 
+                    driver='GTiff', 
+                    count=len(band_order), 
+                    width=width, 
+                    height=height,
+                    dtype=multiband_data.dtype, 
+                    crs='EPSG:32643',  # UTM zone 43N
+                    transform=transform
+                ) as dst:
+                    for i, band_name in enumerate(band_order):
+                        dst.write(band_data[band_name], i + 1)  # Write each band
+                        dst.set_band_description(i + 1, band_name)
+                    
+                    # Add basic file metadata
+                    # metadata_dict = {
+                    #     'date_generated': datetime.now().isoformat(),
+                    #     'acquisition_date': date_str,
+                    #     'band_order': ','.join(band_order)
+                    # }
+                    
+                    # Add any additional metadata from Sentinel Hub
+                    # if metadata:
+                    #     metadata_dict.update({
+                    #         'acquisition_date': metadata.get('acquisitionDate', date_str),
+                    #         'cloud_coverage': str(metadata.get('cloudCoverage', 'Not available')),
+                    #     })
+                    #     if 'tiles' in metadata:
+                    #         metadata_dict['tiles'] = ','.join(metadata['tiles'])
+                    
+                    # dst.update_tags(**metadata_dict)
+                
+                print(f"Successfully saved {len(band_order)} bands to {image_path}")
+                
+                # Generate and save RGB preview
+                preview_path = os.path.join(directory_path, "preview", f"{date_str}_preview.tiff")
+                os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+                create_rgb_preview(band_data, preview_path, transform, crs)
 
-            ndvi_path = os.path.join(directory_path, f"{end_date_str}_NDVI.tiff")
-            create_ndvi_image(band_data, ndvi_path, transform, crs)
+                # Generate and save NDVI image
+                ndvi_path = os.path.join(directory_path, "ndvi", f"{date_str}_NDVI.tiff")
+                os.makedirs(os.path.dirname(ndvi_path), exist_ok=True)
+                create_ndvi_image(band_data, ndvi_path, transform, crs)
 
-            false_color_path = os.path.join(directory_path, f"{end_date_str}_false_color.tiff")
-            create_false_color_composite(band_data, false_color_path, transform, crs, bands=['B08', 'B04', 'B03'])
-
-            return True
+                # Generate and save false color composite
+                false_color_path = os.path.join(directory_path, "false_color", f"{date_str}_false_color.tiff")
+                os.makedirs(os.path.dirname(false_color_path), exist_ok=True)
+                create_false_color_composite(band_data, false_color_path, transform, crs, bands=['B08', 'B04', 'B03'])
+                
+                success_count += 1
+                
+            except Exception as e:
+                error_message = f"Error saving image for {date_str}: {str(e)}"
+                print(error_message)
+                error_count += 1
+                continue
             
         except Exception as e:
-            error_message = f"Error saving image: {str(e)}"
+            error_message = f"Error fetching data for {date_str}: {str(e)}"
             print(error_message)
-            return {"error": error_message}
-        
-    except Exception as e:
-        error_message = f"Error fetching data: {str(e)}"
-        print(error_message)
-        return {"error": error_message}
+            error_count += 1
+            continue
+    
+    # Return summary
+    if success_count > 0:
+        print(f"Processed {success_count} images successfully with {error_count} errors")
+        return True
+    else:
+        return {"error": f"Failed to process any images between {start_date_str} and {end_date_str}"}
 
 def create_rgb_preview(band_data, save_path, transform, crs, scale_factor=9, contrast_stretch=True):
     """
@@ -543,6 +588,7 @@ def create_false_color_composite(band_data, save_path, transform, crs, bands=Non
         print(f"Required bands for false color composite ({', '.join(bands)}) are not available")
 
 
+# Example usage
 # if __name__ == "__main__":
 #     # Example usage
 #     # create bounding coordinates from Left: 73.1311899620134, Bottom: 33.67239849081358, Right: 73.13207589901494, Top: 33.673493285008185
@@ -556,10 +602,12 @@ def create_false_color_composite(band_data, save_path, transform, crs, bands=Non
 #     username = "test"
 #     name = "test_field"
     
-#     # Fetch the imagery
-#     result = fetch_sentinel_imagery(polygon_coords, username, name)
+#     # Fetch the imagery with date range
+#     start_date = '2025-03-01'
+#     end_date = '2025-04-01'
+#     result = fetch_sentinel_imagery(polygon_coords, username, name, start_date, end_date)
     
 #     if isinstance(result, dict) and "error" in result:
 #         print(f"Error: {result['error']}")
 #     else:
-#         print(f"Imagery successfully saved to: {result}")
+#         print("All imagery successfully processed")

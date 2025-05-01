@@ -8,10 +8,12 @@ import rasterio
 from rasterio.plot import show
 import matplotlib.colors as mcolors
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import re                                          # ADDED: Import regex for date parsing
+from datetime import datetime  
 
 # Import the necessary functions from your original script
 from phenology_predictory import (
-    PhenologyRNNModel, predict_phenological_stage_one_pixel, 
+    PhenologyRNNModel, predict_phenological_stage_one_pixel,  predict_phenological_stage_with_date_limit,
     PHENOLOGY_STAGES, CHANNELS, NORMALIZATION_VALUES
 )
 
@@ -187,6 +189,183 @@ def process_entire_tiff(
     print(f"Visualization saved to {viz_path}")
     
     return csv_path, tiff_path, viz_path
+
+
+def process_time_series_predictions(
+        tiff_dir, 
+        output_dir,
+        model_path='C:/New folder/model/best.pth',
+        band_indices = [1, 2, 7, 4, 5, 6, 3, 10, 11],
+        sample_tiff=None,
+        max_workers=4,
+        skip_pixels=None,
+        pixel_mask=None
+    ):
+    """
+    Process TIFF files sequentially, making predictions for each time point.
+    Creates a series of predictions showing how phenology evolves over time.
+    
+    Args:
+        tiff_dir (str): Directory with TIFF files.
+        output_dir (str): Directory to save outputs.
+        model_path (str): Path to the trained model weights.
+        band_indices (list): List of band indices to use.
+        sample_tiff (str): Optional path to a sample TIFF for spatial reference.
+        max_workers (int): Number of parallel workers.
+        skip_pixels (int): Optional, process every Nth pixel.
+        pixel_mask (ndarray): Optional boolean mask of pixels to process.
+        
+    Returns:
+        list: Paths to the output files for each date.
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Load model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    phen_model = PhenologyRNNModel()
+    loaded_checkpoint = torch.load(model_path, map_location=device)
+    phen_model.load_state_dict(loaded_checkpoint['model'])
+    phen_model.to(device)
+    
+    # Get all TIFF files sorted by date
+    files = [f for f in os.listdir(tiff_dir) if f.endswith('.tif') or f.endswith('.tiff')]
+    date_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2})\.tiff$')
+    
+    file_date_tuples = []
+    for file in files:
+        match = date_pattern.match(file)
+        if match:
+            date_str = match.group(1)
+            try:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                file_date_tuples.append((date_obj, file))
+            except ValueError:
+                print(f"Skipping {file}: Could not parse date {date_str}")
+    
+    # Sort files by date
+    file_date_tuples.sort(key=lambda x: x[0])
+    
+    if not file_date_tuples:
+        raise ValueError(f"No valid dated TIFF files found in {tiff_dir}")
+    
+    # Get spatial reference from a sample TIFF
+    if sample_tiff is None:
+        sample_tiff = os.path.join(tiff_dir, file_date_tuples[0][1])
+        
+    with rasterio.open(sample_tiff) as src:
+        height, width = src.shape
+        meta = src.meta.copy()
+        
+        # Create a list of pixel coordinates to process
+        coordinates = []
+        for y in range(height):
+            for x in range(width):
+                if skip_pixels and (x % skip_pixels != 0 or y % skip_pixels != 0):
+                    continue
+                if pixel_mask is not None and not pixel_mask[y, x]:
+                    continue
+                coordinates.append((x, y))
+    
+    print(f"Processing {len(coordinates)} pixels for {len(file_date_tuples)} time points")
+    
+    # Storage for output file paths
+    output_paths = []
+    
+    # Process predictions for each date in sequence
+    for end_idx, (current_date, _) in enumerate(file_date_tuples, 1):
+        current_date_str = current_date.strftime('%Y-%m-%d')
+        
+        print(f"\nMaking predictions up to {current_date_str} using {end_idx} images")
+        
+        # Create a results array and initialize with NoData (-1)
+        results_array = np.full((height, width), -1, dtype=np.int8)
+        results_list = []
+        
+        # Process pixels in parallel for the current date
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            future_to_coord = {
+                executor.submit(
+                    predict_phenological_stage_with_date_limit, 
+                    tiff_dir, 
+                    (x, y), 
+                    phen_model, 
+                    device,
+                    current_date,  # Only use data up to this date
+                    band_indices,
+                    NORMALIZATION_VALUES,
+                    CHANNELS
+                ): (x, y) for x, y in coordinates
+            }
+            
+            # Process results as they complete
+            for future in tqdm(as_completed(future_to_coord), total=len(coordinates), 
+                              desc=f"Processing pixels for {current_date_str}"):
+                x, y = future_to_coord[future]
+                try:
+                    predicted_stage, dates = future.result()
+                    if predicted_stage is not None:
+                        # Store result in array
+                        results_array[y, x] = predicted_stage
+                        # Store result for CSV
+                        results_list.append({
+                            'x': x, 
+                            'y': y, 
+                            'predicted_stage': predicted_stage,
+                            'stage_name': PHENOLOGY_STAGES[predicted_stage],
+                            'num_observations': len(dates) if dates else 0,
+                            'date': current_date_str
+                        })
+                except Exception as e:
+                    print(f"Error processing pixel ({x}, {y}) for date {current_date_str}: {e}")
+        
+        # Save results to CSV
+        results_df = pd.DataFrame(results_list)
+        csv_path = os.path.join(output_dir, f'phenology_results_{current_date_str}.csv')
+        results_df.to_csv(csv_path, index=False)
+        
+        # Save results as a TIFF file with date in the filename
+        meta.update({
+            'count': 1,
+            'dtype': 'int8',
+            'nodata': -1
+        })
+        tiff_path = os.path.join(output_dir, f'phenology_predictions_{current_date_str}.tif')
+        with rasterio.open(tiff_path, 'w', **meta) as dst:
+            dst.write(results_array, 1)
+        
+        # Create a visualization with date in the filename
+        colors = [
+            '#FF0000', 
+            '#FF8033',
+            '#FFFF00', 
+            '#66FF4D', 
+            '#0000FF', 
+            '#FF00FF', 
+            '#00FFFF' 
+        ]
+        cmap = mcolors.ListedColormap(colors)
+        bounds = np.arange(-0.5, len(PHENOLOGY_STAGES) + 0.5)
+        norm = mcolors.BoundaryNorm(bounds, cmap.N)
+        
+        fig = plt.figure(figsize=(12, 10), frameon=False)
+        ax = fig.add_subplot(111)
+        img = ax.imshow(results_array, cmap=cmap, norm=norm)
+
+        ax.set_axis_off()
+        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+        plt.margins(0, 0)
+        ax.xaxis.set_major_locator(plt.NullLocator())
+        ax.yaxis.set_major_locator(plt.NullLocator())
+
+        viz_path = os.path.join(output_dir, f'phenology_visualization_{current_date_str}.png')
+        plt.savefig(viz_path, dpi=300, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)  # Close the figure to free memory
+        
+        print(f"Outputs for {current_date_str} saved to {tiff_path}")
+        output_paths.append((current_date_str, csv_path, tiff_path, viz_path))
+    
+    return output_paths
 
 def process_with_mask(
         tiff_dir, 
