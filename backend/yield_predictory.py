@@ -31,7 +31,7 @@ def unnormalize_yield(normalized_yield):
 
 # Yield RNN model (input_size=10 since we have days_from_sowing + 9 bands).
 class YieldRNNModel(nn.Module):
-    def __init__(self, input_size=10, hidden_size=32, output_size=1, num_layers=2):
+    def __init__(self, input_size=11, hidden_size=32, output_size=1, num_layers=2):
         super(YieldRNNModel, self).__init__()
         self.rnn = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
@@ -113,7 +113,7 @@ def read_field_tiff_features_yield(tiff_dir, band_indices, channels, sowing_date
     return sequence_features, sequence_dates
 
 # New function for per-pixel features
-def read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowing_date=None):
+def read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowing_date=None, phen_of_pixel=None):
     """
     Read TIFF files from a directory, extract values for a specific pixel for each selected band,
     and compute days from sowing (using the first file as sowing date).
@@ -177,8 +177,8 @@ def read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowi
                     sowing_date = date_obj
                 days_from_sowing = (date_obj - sowing_date).days
                 
-                # Create feature vector: [days_from_sowing, pixel_blu, pixel_grn, ..., pixel_sw2]
-                feature_vector = [days_from_sowing] + pixel_values
+                # Create feature vector: [days_from_sowing, phen_of_pixel, pixel_blu, pixel_grn, ..., pixel_sw2]
+                feature_vector = [days_from_sowing, phen_of_pixel] + pixel_values
                 sequence_features.append(feature_vector)
                 sequence_dates.append(date_obj)
         except Exception:
@@ -209,7 +209,7 @@ def normalize_features_array_yield(features_list, normalization_values=NORMALIZA
         if norm_vals is not None:
             min_val = norm_vals['min']
             max_val = norm_vals['max']
-            features_array[:, i+1] = (features_array[:, i+1] - min_val) / (max_val - min_val)
+            features_array[:, i+2] = (features_array[:, i+2] - min_val) / (max_val - min_val)
     return features_array
 
 def predict_yield_field(
@@ -298,7 +298,8 @@ def predict_yield_pixel_with_date_limit(
     band_indices=[1, 2, 7, 4, 5, 6, 3, 10, 11],
     normalization_values=NORMALIZATION_VALUES,
     channels=CHANNELS,
-    sowing_date=None
+    sowing_date=None,
+    phen_of_pixel=None
 ):
     """
     Create a sequence of pixel-level yield features up to a specific date and predict yield.
@@ -317,7 +318,7 @@ def predict_yield_pixel_with_date_limit(
         predicted_yield (float): Unnormalized predicted yield for the pixel.
         dates (list): Filtered list of datetime objects up to max_date.
     """
-    sequence_features, dates = read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowing_date)
+    sequence_features, dates = read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowing_date, phen_of_pixel)
     if not sequence_features:
         return None, None
     

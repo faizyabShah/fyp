@@ -248,7 +248,7 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
     # Process phenology for all time points
     print("Processing phenology time series")
     try:
-        phenology_output_paths = process_time_series_predictions(
+        phenology_output_paths, field_level_phen_predictions = process_time_series_predictions(
             tiff_dir=f"C:/New folder/backend/app/data/{username}_{name}/imagery",
             output_dir=f"C:/New folder/backend/app/data/{username}_{name}/phenology",
         )
@@ -260,7 +260,7 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
     # Process yield for all time points
     print("Processing yield time series")
     try:
-        yield_output_paths, field_level_predictions = process_yield_time_series_predictions(
+        yield_output_paths, field_level_yield_predictions = process_yield_time_series_predictions(
             tiff_dir=f"C:/New folder/backend/app/data/{username}_{name}/imagery",
             output_dir=f"C:/New folder/backend/app/data/{username}_{name}/yield",
             sowing_date=plantation_date,
@@ -269,7 +269,7 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
     except Exception as e:
         print(f"Error processing yield: {str(e)}")
         yield_output_paths = []
-        field_level_predictions = {}
+        field_level_yield_predictions = {}
     
     # Also run the original field-level yield prediction (for backward compatibility)
     try:

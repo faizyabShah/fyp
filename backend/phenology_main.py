@@ -365,7 +365,7 @@ def process_time_series_predictions(
         print(f"Outputs for {current_date_str} saved to {tiff_path}")
         output_paths.append((current_date_str, csv_path, tiff_path, viz_path))
     
-    return output_paths
+    return output_paths, results_array
 
 def process_with_mask(
         tiff_dir, 

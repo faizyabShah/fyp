@@ -71,7 +71,8 @@ def process_yield_time_series_predictions(
         tiff_dir, 
         output_dir,
         sowing_date=None,
-        model_path=r"C:/New folder/model/yield.pth", 
+        phenology_predictions=None,
+        model_path=r"E:/UniStuff/UNI_Work/FYP/fyp/model/yield_new.pth", 
         band_indices = [1, 2, 7, 4, 5, 6, 3, 10, 11],
         sample_tiff=None,
         max_workers=4,
@@ -180,7 +181,8 @@ def process_yield_time_series_predictions(
                     band_indices,
                     NORMALIZATION_VALUES,
                     CHANNELS,
-                    sowing_date
+                    sowing_date,
+                    phenology_predictions[y, x]
                 ): (x, y) for x, y in coordinates
             }
             
