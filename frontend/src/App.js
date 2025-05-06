@@ -6,12 +6,16 @@ import Dashboard from './pages/Dashboard';
 import { AuthProvider } from './contexts/Authcontext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/css/bootstrap.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import SuperAdmin from './pages/SuperAdmin';
 import Requests from './pages/Requests';
 import RequestDetail from './pages/RequestDetail';
 import Footer from './components/Footer';
 
 function App() {
+
+  
+
   return (
     <>
     <AuthProvider>

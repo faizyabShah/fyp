@@ -71,7 +71,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <Chatbot />
+      {/* <Chatbot /> */}
       <Navbar fixed={false} dashboard={true} />
       <div className="col-md-3">
         <Sidebar activeTab={currentPage} setActiveTab={setCurrentPage} />

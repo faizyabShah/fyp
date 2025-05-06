@@ -11,7 +11,7 @@ def generate_text(query, dir_path, name):
     :param name: The name of the file (without extension, if you like).
     """
     
-    url = "https://10.3.16.62:443/ask_faiz"
+    url = "https://10.3.16.71:443/ask_faiz"
     
     # Prepare the JSON payload
     payload = {

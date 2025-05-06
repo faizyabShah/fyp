@@ -6,6 +6,8 @@ import AddFieldForm from '../components/AddFieldForm';
 import LeafletMap from '../components/LeafletMap';
 import '../styles/Fields.css';
 import { useNavigate } from 'react-router-dom';
+import MessageDialog from '../components/MessageDialog';
+
 
 // Field Edit Form component - shared by both ActiveFields and HarvestedFields
 const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
@@ -309,7 +311,7 @@ const ActiveFields = ({ token, fetchFields }) => {
       });
 
       if (response.ok) {
-        fetchFields(); // Refresh fields after deletion
+        fetchActiveFields(); // Refresh fields after deletion
         closeDeleteConfirm();
       } else {
         console.error('Failed to delete field');
@@ -343,7 +345,7 @@ const ActiveFields = ({ token, fetchFields }) => {
       });
 
       if (response.ok) {
-        fetchFields(); // Refresh fields after update
+        fetchActiveFields(); // Refresh fields after update
         closeHarvestConfirm();
       } else {
         console.error('Failed to update harvest status');
@@ -375,6 +377,20 @@ const ActiveFields = ({ token, fetchFields }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const showAddMessage = () => {
+    const message = 'Field added successfully!';
+    const type = 'success';
+    const duration = 3000; // 3 seconds
+    const messageDialog = (
+      <MessageDialog
+        message={message}
+        type={type}
+        onClose={() => setUserFieldData([])} // Clear the message after closing
+      />
+    );
+    setUserFieldData(messageDialog);
   };
 
   useEffect(() => {
@@ -473,6 +489,7 @@ const ActiveFields = ({ token, fetchFields }) => {
             onSuccess={() => {
               fetchActiveFields();
               closeAddFieldForm();
+              showAddMessage();
             }}
           />
         </Modal>

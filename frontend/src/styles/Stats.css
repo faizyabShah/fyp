@@ -1,0 +1,158 @@
+/* Stats.css */
+
+/* Field selector styling */
+.field-header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .field-selector-container {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 8px 16px;
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e6e6e6; */
+    transition: all 0.3s ease;
+  }
+  
+  .field-selector-container:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+  
+  .field-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-right: 12px;
+    margin-bottom: 0;
+    font-size: 0.95rem;
+  }
+  
+  .field-selector-dropdown {
+    padding: 8px 16px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: #f9f9f9;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 180px;
+    outline: none;
+  }
+  
+  .field-selector-dropdown:focus {
+    border-color: var(--tertiary, #4CAF50);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  }
+  
+  .field-selector-dropdown:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* Section heading styling */
+  .section-heading {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.6rem;
+    position: relative;
+    padding-bottom: 5px;
+  }
+  
+  .header-divider {
+    height: 3px;
+    background: linear-gradient(to right, #4CAF50, rgba(76, 175, 80, 0.3));
+    margin-bottom: 15px;
+    border-radius: 3px;
+  }
+  
+  /* Profile Styles */
+  .profile-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--tertiary, #4CAF50);
+  }
+  
+  .welcome-heading {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+  }
+  
+  .text-grey {
+    color: #7f8c8d;
+  }
+  
+  .profile-para {
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  
+  /* Box container styling */
+  .box-cont {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    height: 100%;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .field-header-container {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .field-selector-container {
+      margin-top: 15px;
+      width: 100%;
+    }
+    
+    .field-selector-dropdown {
+      width: 100%;
+    }
+  }
+
+  /* Add these styles to your Stats.css file */
+
+/* Add these styles to your Stats.css file */
+
+/* Detailed recommendations button styling */
+.detailed-rec-link-container {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detailed-rec-btn {
+  transition: all 0.3s ease;
+  border-width: 2px;
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  background-color: transparent;
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.detailed-rec-btn:hover {
+  background-color: rgba(40, 167, 69, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detailed-rec-btn i {
+  transition: transform 0.3s ease;
+}
+
+.detailed-rec-btn:hover i {
+  transform: translateX(3px);
+}

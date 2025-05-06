@@ -27,7 +27,7 @@ configuration = Config()
 DATA_FOLDER = configuration.BASE_DIR
 os.makedirs(DATA_FOLDER, exist_ok=True)
 
-def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_date_str, max_cloud_coverage=0.7):
+def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_date_str, max_cloud_coverage=0.07):
     """
     Fetch Sentinel-2 imagery based on the provided polygon coordinates for all images between start and end dates.
     

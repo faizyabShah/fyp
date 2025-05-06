@@ -11,6 +11,7 @@ const Homepage = () => {
   return (
     <div className="App">
       <Navbar fixed={true} fromhome={true} />
+
       <Element name="home" className="element">
         <Home />
       </Element>

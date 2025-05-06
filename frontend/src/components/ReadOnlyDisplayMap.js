@@ -193,10 +193,12 @@ function findRasterMinMax(raster, lowClip = 0.02, highClip = 0.98) {
 }
 
 // Component to display hover information
-const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, activeView }) => {
+// Component to display hover information with crop health indicators
+const HoverInfo = ({ map, ndviData, phenologyData, yieldData, saviData, polygonCoords, activeView }) => {
   const [ndviRaster, setNdviRaster] = useState(null);
   const [phenologyRaster, setPhenologyRaster] = useState(null);
   const [yieldRaster, setYieldRaster] = useState(null);
+  const [saviRaster, setSaviRaster] = useState(null);
   const [yieldMinMax, setYieldMinMax] = useState({ min: 0, max: 10 });
   const [tooltipDiv, setTooltipDiv] = useState(null);
   const loadingRef = useRef(false);
@@ -240,10 +242,11 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
   
   // Load and process raster data separately from display layers
   useEffect(() => {
-    if (!ndviData && !phenologyData && !yieldData) {
+    if (!ndviData && !phenologyData && !yieldData && !saviData) {
       setNdviRaster(null);
       setPhenologyRaster(null);
       setYieldRaster(null);
+      setSaviRaster(null);
       return;
     }
 
@@ -271,6 +274,27 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
           }
         } else {
           setNdviRaster(null);
+        }
+        
+        // Process SAVI data
+        if (saviData) {
+          const binaryString = atob(saviData);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const saviArrayBuffer = bytes.buffer.slice(0, bytes.length);
+          
+          try {
+            // Parse the georaster
+            const saviGeoRaster = await parseGeoraster(saviArrayBuffer);
+            setSaviRaster(saviGeoRaster);
+          } catch (error) {
+            console.error("Error parsing SAVI raster:", error);
+            setSaviRaster(null);
+          }
+        } else {
+          setSaviRaster(null);
         }
         
         // Process phenology data
@@ -327,7 +351,27 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
     };
     
     loadRasterData();
-  }, [ndviData, phenologyData, yieldData]);
+  }, [ndviData, phenologyData, yieldData, saviData]);
+
+  // Helper function to determine crop health status based on NDVI value
+  const getCropHealthStatus = (ndviValue) => {
+    if (ndviValue < 0.1) return { status: "Poor", color: "#dc1414" };
+    if (ndviValue < 0.2) return { status: "Very Low", color: "#ff6b6b" };
+    if (ndviValue < 0.4) return { status: "Low to Moderate", color: "#ffb432" };
+    if (ndviValue < 0.6) return { status: "Healthy", color: "#96f032" };
+    if (ndviValue < 0.8) return { status: "Very Healthy", color: "#00b400" };
+    return { status: "Exceptional", color: "#008000" };
+  };
+  
+  // Helper function to get a more detailed health description based on NDVI
+  const getHealthDescription = (ndviValue) => {
+    if (ndviValue < 0.1) return "Bare soil or severely stressed vegetation";
+    if (ndviValue < 0.2) return "Very early crop stages or significant stress";
+    if (ndviValue < 0.4) return "Early to mid-season crops or mild stress";
+    if (ndviValue < 0.6) return "Healthy, mid-season crop development";
+    if (ndviValue < 0.8) return "Peak vegetation, optimal health";
+    return "Exceptionally dense and thriving vegetation";
+  };
   
   // Set up mousemove event to display values
   useEffect(() => {
@@ -353,11 +397,14 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
       // Check if point is inside polygon
       if (polygon.getBounds().contains(e.latlng) && pointInPolygon([lat, lng], polygonCoords)) {
         let ndviValue = "N/A";
+        let saviValue = "N/A";
         let phenologyValue = "N/A";
         let phenologyStage = "N/A";
         let yieldValue = "N/A";
         let ndviColor = "transparent";
         let yieldColor = "transparent";
+        let healthStatus = { status: "N/A", color: "transparent" };
+        let healthDescription = "";
         
         // Get raster values directly from the raster data
         const updateDisplay = () => {
@@ -365,6 +412,10 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
           
           const ndviColorStyle = ndviValue !== "N/A" 
             ? `<div style="display: inline-block; width: 12px; height: 12px; border-radius: 3px; background-color: ${ndviColor}; margin-right: 5px; vertical-align: middle;"></div>` 
+            : '';
+            
+          const healthColorStyle = healthStatus.status !== "N/A" 
+            ? `<div style="display: inline-block; width: 12px; height: 12px; border-radius: 3px; background-color: ${healthStatus.color}; margin-right: 5px; vertical-align: middle;"></div>` 
             : '';
             
           const yieldColorStyle = yieldValue !== "N/A" 
@@ -387,6 +438,15 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
             </div>`;
           }
           
+          // Only show SAVI if we have data
+          if (saviRaster) {
+            tooltipContent += `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: rgba(255,255,255,0.8);">SAVI:</span>
+              <span>${saviValue}</span>
+            </div>`;
+          }
+          
           // Only show phenology if we have data
           if (phenologyRaster) {
             tooltipContent += `
@@ -399,9 +459,23 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
           // Only show yield if we have data
           if (yieldRaster) {
             tooltipContent += `
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
               <span style="color: rgba(255,255,255,0.8);">Yield:</span>
               <span>${yieldColorStyle}${yieldValue} t/ha</span>
+            </div>`;
+          }
+          
+          // Add crop health status at the bottom under a line
+          if (healthStatus.status !== "N/A") {
+            tooltipContent += `
+            <div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: rgba(255,255,255,0.8);">Crop Health:</span>
+                <span>${healthColorStyle}${healthStatus.status}</span>
+              </div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.7); font-style: italic;">
+                ${healthDescription}
+              </div>
             </div>`;
           }
           
@@ -428,10 +502,29 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
               else if (valueAtPoint < 0.6) ndviColor = '#96f032';
               else ndviColor = '#00b400';
               
+              // Get health status and description
+              healthStatus = getCropHealthStatus(valueAtPoint);
+              healthDescription = getHealthDescription(valueAtPoint);
+              
               updateDisplay();
             }
           } catch (error) {
             console.warn("Error getting NDVI value:", error);
+          }
+        }
+        
+        // Get SAVI value if raster is available
+        if (saviRaster) {
+          try {
+            // Find the pixel value at the current lat/lng
+            const valueAtPoint = getValueFromRaster(saviRaster, lat, lng);
+            
+            if (valueAtPoint !== null && valueAtPoint !== saviRaster.noDataValue) {
+              saviValue = valueAtPoint.toFixed(2);
+              updateDisplay();
+            }
+          } catch (error) {
+            console.warn("Error getting SAVI value:", error);
           }
         }
         
@@ -502,11 +595,13 @@ const HoverInfo = ({ map, ndviData, phenologyData, yieldData, polygonCoords, act
       map.off('mousemove', handleMouseMove);
       map.getContainer().removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [map, tooltipDiv, polygonCoords, ndviRaster, phenologyRaster, yieldRaster, yieldMinMax, activeView]);
+  }, [map, tooltipDiv, polygonCoords, ndviRaster, phenologyRaster, yieldRaster, saviRaster, yieldMinMax, activeView]);
   
   return null;
 };
 
+
+// GeoTIFFLayer component with improved layer management
 // GeoTIFFLayer component with improved layer management
 const GeoTIFFLayer = ({ base64Data, activeView, polygonCoords, viewChanging, layerOpacity = 1.0 }) => {
   const map = useMap();
@@ -622,6 +717,17 @@ const GeoTIFFLayer = ({ base64Data, activeView, polygonCoords, viewChanging, lay
             if (values[0] < 0.6) return '#96f032';
             return '#00b400';
           };
+        } else if (activeView === 'SAVI') {
+          // Use a similar color scheme for SAVI as NDVI since they're related
+          pixelValuesToColorFn = values => {
+            if (values[0] === georaster.noDataValue) return null;
+            if (values[0] < -0.2) return '#960000';
+            if (values[0] < 0) return '#dc1414';
+            if (values[0] < 0.2) return '#ffb432';
+            if (values[0] < 0.4) return '#f0f032';
+            if (values[0] < 0.6) return '#96f032';
+            return '#00b400';
+          };
         } else if (activeView === 'phenology') {
           pixelValuesToColorFn = values => {
             if (values[0] === georaster.noDataValue) return null;
@@ -700,7 +806,6 @@ const GeoTIFFLayer = ({ base64Data, activeView, polygonCoords, viewChanging, lay
         loadingRef.current = false;
       }
     };
-    
     loadGeoTIFF();
   }, [map, base64Data, activeView, polygonCoords, viewChanging, layerKey, layerOpacity]);
   
@@ -708,7 +813,8 @@ const GeoTIFFLayer = ({ base64Data, activeView, polygonCoords, viewChanging, lay
 };
 
 // MapControls component to get access to the map object for HoverInfo
-const MapControls = ({ ndviData, phenologyData, yieldData, polygonCoords, activeView }) => {
+// MapControls component to get access to the map object for HoverInfo
+const MapControls = ({ ndviData, phenologyData, yieldData, saviData, polygonCoords, activeView }) => {
   const map = useMap();
   
   // Listen for zoom events to ensure smooth rendering
@@ -733,6 +839,7 @@ const MapControls = ({ ndviData, phenologyData, yieldData, polygonCoords, active
         ndviData={ndviData} 
         phenologyData={phenologyData}
         yieldData={yieldData}
+        saviData={saviData}
         polygonCoords={polygonCoords}
         activeView={activeView}
       />
@@ -758,11 +865,12 @@ const FieldBoundary = ({ coordinates, color = '#3388ff' }) => {
 };
 
 const ReadOnlyDisplayMap = ({ selectedField, satelliteData, activeView, viewChanging, layerOpacity = 1.0 }) => {
-  const [polygonCoords, setPolygonCoords] = useState([]);
   const [geoTiffData, setGeoTiffData] = useState(null);
+  const [polygonCoords, setPolygonCoords] = useState([]);
   const [ndviData, setNdviData] = useState(null);
   const [phenologyData, setPhenologyData] = useState(null);
   const [yieldData, setYieldData] = useState(null);
+  const [saviData, setSaviData] = useState(null);
 
   // Parse field coordinates
   useEffect(() => {
@@ -792,13 +900,15 @@ const ReadOnlyDisplayMap = ({ selectedField, satelliteData, activeView, viewChan
       setNdviData(null);
       setPhenologyData(null);
       setYieldData(null);
+      setSaviData(null);
       return;
     }
     
-    // Always load NDVI, phenology and yield data for hover info, regardless of current view
+    // Always load NDVI, phenology, yield, and SAVI data for hover info, regardless of current view
     setNdviData(satelliteData.files.ndvi || null);
     setPhenologyData(satelliteData.files.phenology || null);
     setYieldData(satelliteData.files.yield || null);
+    setSaviData(satelliteData.files.savi || null);
     
     // Map activeView to the corresponding file type in the backend response
     let fileType;
@@ -817,6 +927,9 @@ const ReadOnlyDisplayMap = ({ selectedField, satelliteData, activeView, viewChan
         break;
       case 'yield':
         fileType = 'yield';
+        break;
+      case 'SAVI':
+        fileType = 'savi';
         break;
       default:
         fileType = null;
@@ -872,9 +985,11 @@ const ReadOnlyDisplayMap = ({ selectedField, satelliteData, activeView, viewChan
         ndviData={ndviData} 
         phenologyData={phenologyData}
         yieldData={yieldData}
+        saviData={saviData}
         polygonCoords={polygonCoords}
         activeView={activeView}
       />
+      
     </MapContainer>
   );
 };

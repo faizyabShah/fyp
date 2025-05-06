@@ -1,11 +1,12 @@
-import React from 'react';
-import FieldDisplay from '../components/FieldDisplay';
+import React, { useState, useEffect } from 'react';
 import PhenologyData from '../components/PhenologyData';
 import WeatherWidget from '../components/WeatherWidget';
-import SatelliteViewer from '../components/SatelliteViewer'; // Import the new component
-import RecommendationDisplay from '../components/RecommendationDisplay';
-import { useState, useEffect } from 'react';
+import SatelliteViewer from '../components/SatelliteViewer';
+import VegetationTrends from '../components/VegetationTrends';
+import RecommendationSummary from '../components/RecommendationSummary';
+import RecommendationModal from '../components/RecommendationModal';
 import { useNavigate } from 'react-router-dom';
+import '../styles/Stats.css';
 
 const Stats = ({
   userName,
@@ -18,6 +19,7 @@ const Stats = ({
   const [recommendation, setRecommendation] = useState('');
   const [phenStage, setPhenStage] = useState(null);
   const [yeeeld, setYield] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const fetchUserFields = async () => {
@@ -68,7 +70,6 @@ const Stats = ({
     }
   };
 
-
   useEffect(() => {
     fetchPhenologyStage();
   }, [selectedField]);
@@ -107,6 +108,19 @@ const Stats = ({
     }
   }, [selectedField]);
 
+  // Function to handle field selection from a dropdown
+  const handleFieldChange = (e) => {
+    const fieldId = e.target.value;
+    const field = userFieldData.find(f => f.id === parseInt(fieldId));
+    if (field) {
+      setSelectedField(field);
+    }
+  };
+
+  // Modal control functions
+  const handleShowModal = () => setShowModal(true);
+  const handleCloseModal = () => setShowModal(false);
+
   return (
     <div className="dashboards pt-5" id="Dashboard">
       <div className="row pad-5">
@@ -134,41 +148,78 @@ const Stats = ({
           </div>
         ) : (
           <>
-            <div className="col-md-12 px-5 pt-5 border-bottom border-3">
-              <h2 className="section-heading">Select a Field</h2>
-            </div>
-            <div className="col-md-7 p-3">
-              <FieldDisplay fieldInfo={userFieldData} selectedField={selectedField} setSelectedField={setSelectedField} />
-            </div>
-            <div className="col-md-5 p-3">
-              <div className="box-cont">
-                <PhenologyData selectedField={selectedField} phenStage={phenStage} yeeeld={yeeeld}/>
+            <div className="col-md-12 px-5 pt-5">
+              <div className="field-header-container">
+                <h2 className="section-heading">Field Overview</h2>
+                {userFieldData.length > 0 && (
+                  <div className="field-selector-container">
+                    <label htmlFor="field-selector" className="field-label">Select Field:</label>
+                    <select 
+                      id="field-selector"
+                      className="field-selector-dropdown" 
+                      value={selectedField ? selectedField.id : ''} 
+                      onChange={handleFieldChange}
+                    >
+                      {userFieldData.map(field => (
+                        <option key={field.id} value={field.id}>
+                          {field.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
+              <div className="header-divider"></div>
+            </div>
+            
+            <div className="col-md-7 p-3">
+              <RecommendationSummary reportContent={recommendation} />
+              
+              {/* Detailed recommendations button */}
+              {recommendation && (
+                <div className="detailed-rec-link-container p-3 text-center">
+                  <button 
+                    className="btn btn-outline-success detailed-rec-btn"
+                    onClick={handleShowModal}
+                  >
+                    <i className="fas fa-list-ul me-2"></i>
+                    View Detailed Recommendations
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="col-md-5 p-3">
+              <PhenologyData selectedField={selectedField} phenStage={phenStage} yeeeld={yeeeld}/>
             </div>
 
-            <div className="col-md-12 px-5 pt-5 border-bottom border-3">
+            {/* New Vegetation Trends Section */}
+            
+
+            <div className="col-md-12 px-5 pt-5">
               <h2 className="section-heading">Satellite View</h2>
+              <div className="header-divider"></div>
             </div>
             <div className="col-md-12 p-3">
               <SatelliteViewer selectedField={selectedField} token={token} />
             </div>
-
-            <div className="col-md-12 px-5 pt-5 border-bottom border-3">
-              <h2 className="section-heading">Recommendations</h2>
+            <div className="col-md-12 px-5 pt-5">
+              <h2 className="section-heading">Vegetation Health Trends</h2>
+              <div className="header-divider"></div>
             </div>
-            
             <div className="col-md-12 p-3">
-              {recommendation ? (
-                <RecommendationDisplay reportContent={recommendation} />
-              ) : (
-                <div className="box-cont d-flex justify-content-center align-items-center p-5">
-                  <p className="text-grey">Recommendations for the field will be available soon.</p>
-                </div>
-              )}
+              <VegetationTrends selectedField={selectedField} token={token} />
             </div>
           </>
         )}
       </div>
+
+      {/* Recommendation Modal Component */}
+      <RecommendationModal 
+        show={showModal}
+        handleClose={handleCloseModal}
+        reportContent={recommendation}
+      />
     </div>
   );
 };
