@@ -11,6 +11,7 @@ from rasterio.transform import from_origin, from_bounds
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import csv
 
 from pyproj import Transformer
 
@@ -26,7 +27,7 @@ configuration = Config()
 DATA_FOLDER = configuration.BASE_DIR
 os.makedirs(DATA_FOLDER, exist_ok=True)
 
-def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_date_str, max_cloud_coverage=0.03):
+def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_date_str, max_cloud_coverage=0.7):
     """
     Fetch Sentinel-2 imagery based on the provided polygon coordinates for all images between start and end dates.
     
@@ -334,10 +335,39 @@ def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_d
                 os.makedirs(os.path.dirname(ndvi_path), exist_ok=True)
                 create_ndvi_image(band_data, ndvi_path, transform, crs)
 
+                savi_path = os.path.join(directory_path, "savi", f"{date_str}_SAVI.tiff")
+                os.makedirs(os.path.dirname(savi_path), exist_ok=True)
+                create_savi_image(band_data, savi_path, transform, crs)
+
                 # Generate and save false color composite
                 false_color_path = os.path.join(directory_path, "false_color", f"{date_str}_false_color.tiff")
                 os.makedirs(os.path.dirname(false_color_path), exist_ok=True)
                 create_false_color_composite(band_data, false_color_path, transform, crs, bands=['B08', 'B04', 'B03'])
+
+                avg_indices = calculate_average_indices(band_data)
+                
+                # Prepare CSV row
+                csv_row = {
+                    'date': date_str,
+                    'ndvi': avg_indices['ndvi'],
+                    'savi': avg_indices['savi']
+                }
+
+                csv_path = os.path.join(directory_path, "indices.csv")
+                csv_exists = os.path.exists(csv_path)
+                
+                with open(csv_path, 'a', newline='') as csvfile:
+                    fieldnames = ['date', 'ndvi', 'savi']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    
+                    # Write header if file doesn't exist
+                    if not csv_exists:
+                        writer.writeheader()
+                    
+                    writer.writerow(csv_row)
+                
+                print(f"Added indices for {date_str} to CSV file")
+
                 
                 success_count += 1
                 
@@ -459,6 +489,88 @@ def create_rgb_preview(band_data, save_path, transform, crs, scale_factor=9, con
         print(f"RGB GeoTIFF saved to {save_path}")
     else:
         print("Required bands for RGB preview are not available")
+
+def create_savi_image(band_data, save_path, transform, crs, L=0.5):
+    """
+    Create and save a Soil Adjusted Vegetation Index (SAVI) image as GeoTIFF with spatial reference.
+    
+    SAVI = ((NIR - RED) / (NIR + RED + L)) * (1 + L)
+    where L is a soil brightness correction factor (default = 0.5)
+    """
+    # Extract NIR and RED bands
+    nir = band_data['B08'].astype(np.float32)
+    red = band_data['B04'].astype(np.float32)
+    
+    # Get dimensions
+    height, width = nir.shape
+
+    # Calculate SAVI with soil brightness correction factor
+    savi = ((nir - red) / (nir + red + L)) * (1 + L)
+    
+    # Save as GeoTIFF
+    with rasterio.open(
+        save_path, 'w',
+        driver='GTiff',
+        height=height,
+        width=width,
+        count=1,
+        dtype=np.float32,
+        crs=crs,
+        transform=transform
+    ) as dst:
+        dst.write(savi, 1)
+        
+        # Set band description
+        dst.set_band_description(1, 'SAVI')
+        
+        # Add metadata
+        dst.update_tags(
+            created=datetime.now().isoformat(),
+            description='Soil Adjusted Vegetation Index (SAVI)',
+            source_bands='B08,B04',
+            formula='((NIR - RED) / (NIR + RED + L)) * (1 + L)',
+            L_factor=str(L)
+        )
+    
+    print(f"SAVI GeoTIFF saved to {save_path}")
+
+
+def calculate_average_indices(band_data):
+    """
+    Calculate average NDVI and SAVI values for the image.
+    
+    Parameters:
+    -----------
+    band_data : dict
+        Dictionary containing band data
+        
+    Returns:
+    --------
+    dict
+        Dictionary containing average NDVI and SAVI values
+    """
+    # Extract NIR and RED bands
+    nir = band_data['B08'].astype(np.float32)
+    red = band_data['B04'].astype(np.float32)
+    
+    # Calculate NDVI
+    ndvi = (nir - red) / (nir + red + 1e-6)
+    
+    # Calculate SAVI with L=0.5
+    L = 0.5
+    savi = ((nir - red) / (nir + red + L)) * (1 + L)
+    
+    # Create masks for valid pixels (exclude extreme values)
+    valid_mask = (ndvi >= -1.0) & (ndvi <= 1.0) & (savi >= -1.0) & (savi <= 1.0)
+    
+    # Calculate averages for valid pixels only
+    avg_ndvi = np.mean(ndvi[valid_mask])
+    avg_savi = np.mean(savi[valid_mask])
+    
+    return {
+        'ndvi': avg_ndvi,
+        'savi': avg_savi
+    }
 
 def create_ndvi_image(band_data, save_path, transform, crs):
     """

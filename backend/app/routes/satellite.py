@@ -63,6 +63,7 @@ def get_satellite_data(field_id):
         'preview': os.path.join(base_path, "preview", f"{selected_date}_preview.tiff"),
         'false_color': os.path.join(base_path, "false_color", f"{selected_date}_false_color.tiff"),
         'ndvi': os.path.join(base_path, "ndvi", f"{selected_date}_NDVI.tiff"),
+        # 'savi': os.path.join(base_path, "savi", f"{selected_date}_SAVI.tiff"),  # Added SAVI file
         'phenology': os.path.join(base_path, "phenology", f"phenology_predictions_{selected_date}.tif"),
         'yield': os.path.join(base_path, "yield", f"yield_predictions_{selected_date}.tif"),
     }
@@ -86,3 +87,73 @@ def get_satellite_data(field_id):
         'available_dates': available_dates,
         'files': encoded_files
     }), 200
+
+@satellite_bp.route('/satellite/<int:field_id>/timeseries', methods=['GET'])
+def get_satellite_timeseries(field_id):
+    """Return time series data of average NDVI and SAVI for a field."""
+    user = authenticate_request()
+    if isinstance(user, tuple):
+        # This means authentication failed
+        return user  # Unauthorized response
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Fetch field info
+    cursor.execute('''
+        SELECT user_email, name
+        FROM fields
+        WHERE id = ?
+    ''', (field_id,))
+    field = cursor.fetchone()
+    conn.close()
+    
+    if not field:
+        return jsonify({'error': 'Field not found'}), 404
+    
+    # Construct the data_dir
+    user_email = field['user_email']
+    field_name = field['name']
+    data_dir = f"{user_email}_{field_name}"
+    base_path = os.path.join(BASE_DIR, data_dir)
+    
+    # Check if directory exists
+    if not os.path.exists(base_path):
+        return jsonify({'error': 'Satellite data directory not found'}), 404
+    
+    # Path to the indices.csv file
+    indices_path = os.path.join(base_path, "indices.csv")
+    
+    # Check if indices.csv exists
+    if not os.path.exists(indices_path):
+        return jsonify({'error': 'Indices data not found for this field'}), 404
+    
+    # Parse the CSV file
+    import csv
+    timeseries_data = []
+    
+    try:
+        with open(indices_path, 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                # Convert string values to float
+                ndvi_value = float(row['ndvi']) if row['ndvi'] else None
+                savi_value = float(row['savi']) if row['savi'] else None
+                
+                timeseries_data.append({
+                    'date': row['date'],
+                    'ndvi': ndvi_value,
+                    'savi': savi_value
+                })
+        
+        # Sort by date
+        timeseries_data.sort(key=lambda x: x['date'])
+        
+        return jsonify({
+            'field_id': field_id,
+            'data_dir': data_dir,
+            'timeseries': timeseries_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Error reading indices data: {str(e)}'}), 500

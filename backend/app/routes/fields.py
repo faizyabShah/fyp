@@ -22,6 +22,16 @@ bbch_dict = {
     "bbch_99": "Maturity"
 }
 
+inverted_bbch_dict = {
+    "Germination": "bbch_00",
+    "Tillering": "bbch_10",
+    "Jointing": "bbch_31",
+    "Booting/Heading": "bbch_51",  # Note: This maps to bbch_51
+    "Anthesis": "bbch_75",
+    "Grain Filling": "bbch_87",
+    "Maturity": "bbch_99"
+}
+
 
 @fields_bp.route('/fields', methods=['POST'])
 def add_field():
@@ -218,7 +228,8 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
     try:
 
         print(f"Starting fetch_sentinel_imagery for {username}_{name}")
-        end_date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        end_date_str = "2024-04-24"  # Placeholder for the end date
+        # end_date_str = datetime.datetime.now().strftime("%Y-%m-%d")
         is_valid = fetch_sentinel_imagery(polygon_coords, username, name, plantation_date, end_date_str)
         print(f"fetch_sentinel_imagery completed with result: {is_valid}")
 
@@ -297,6 +308,7 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
         if date_str not in date_data:
             date_data[date_str] = {"date": date_str}
         
+        print("ONCE MORE: ", field_yield)
         if field_yield is not None:
             date_data[date_str]["yield"] = field_yield
             date_data[date_str]["yield_tiff"] = tiff_path
@@ -309,6 +321,8 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
     for date_str, data in date_data.items():
         phenology_stage = data.get("phenology_stage", None)
         yield_value = data.get("yield", None)
+        yield_value = float(yield_value) if yield_value is not None else None
+
         
         # Check if an entry already exists for this field and date
         cursor.execute('SELECT id FROM satellite WHERE field_id = ? AND observation_date = ?', 
@@ -336,9 +350,11 @@ def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date
     try:
         latest_date = max(date_data.keys()) if date_data else datetime.datetime.now().strftime("%Y-%m-%d")
         latest_phenology = date_data.get(latest_date, {}).get("phenology_stage", "Unknown")
+
+        phenology_bbch = inverted_bbch_dict.get(latest_phenology, "Unknown")
         
         print(f"Generating report for {latest_date} with phenology {latest_phenology}")
-        query = f"Give me recommendations for the crop at stage {latest_phenology}"
+        query = f"Give me recommendations for the wheat crop at stage {phenology_bbch}"
         generate_text(query, f"C:/New folder/reports/{username}_{name}", latest_date)
         
         # Record the report generation

@@ -201,7 +201,7 @@ def process_yield_time_series_predictions(
         # Calculate field-level average yield
         field_yield = np.nanmean(results_array) if valid_predictions else None
         field_level_predictions[current_date_str] = field_yield
-        
+        print("FIELD YIELDDDDD: ", field_yield)
         # Save field-level prediction to CSV
         with open(field_predictions_csv, mode='a', newline='') as file:
             writer = csv.writer(file)

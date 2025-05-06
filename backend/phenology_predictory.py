@@ -206,11 +206,14 @@ def predict_phenological_stage_with_date_limit(
         if date <= max_date:
             filtered_features.append(feature)
             filtered_dates.append(date)
+            print("Adding feature for date:", date)
     
     if not filtered_features:
         return None, None
     
     normalized_features = normalize_features_array(filtered_features, normalization_values, channels)
+    print("Sequence length is: " , len(normalized_features))
+
     # Stack the feature vectors to create a tensor
     seq_tensor = torch.tensor(normalized_features, dtype=torch.float32).unsqueeze(0)
     seq_tensor = seq_tensor.to(device)
