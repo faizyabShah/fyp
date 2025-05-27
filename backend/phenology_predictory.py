@@ -170,18 +170,71 @@ def predict_phenological_stage_one_pixel(
     _, predicted_stage = torch.max(output.data, 1)
     return predicted_stage.item(), dates
 
+
+def predict_phenological_stage_with_date_limit(
+        tiff_dir, pixel, model, device, 
+        max_date,  # New parameter to limit the dates used
+        band_indices = [1, 2, 7, 4, 5, 6, 3, 10, 11],
+        normalization_values = NORMALIZATION_VALUES,
+        channels = CHANNELS
+):
+    """
+    Create a sequence from TIFF features up to a specific date and predict the phenological stage.
+    
+    Args:
+        tiff_dir (str): Directory with TIFF files.
+        pixel (tuple or str): Pixel coordinates (x, y) at which to extract features.
+        model (nn.Module): The trained RNN model.
+        device (torch.device): Device on which to run the model.
+        max_date (datetime): Only use data up to this date for prediction.
+        band_indices (list): List of band indices to use for feature extraction.
+        
+    Returns:
+        predicted_stage (int): The predicted phenological stage (index of max output).
+        dates (list): Sorted dates corresponding to each feature vector used.
+    """
+    # Get the sequence of features and the corresponding dates
+    sequence_features, dates = read_field_tiff_features(tiff_dir, pixel, band_indices)
+    
+    if not sequence_features:
+        return None, None
+    
+    # Filter features and dates to only include those up to max_date
+    filtered_features = []
+    filtered_dates = []
+    for feature, date in zip(sequence_features, dates):
+        if date <= max_date:
+            filtered_features.append(feature)
+            filtered_dates.append(date)
+    
+    if not filtered_features:
+        return None, None
+    
+    normalized_features = normalize_features_array(filtered_features, normalization_values, channels)
+
+    # Stack the feature vectors to create a tensor
+    seq_tensor = torch.tensor(normalized_features, dtype=torch.float32).unsqueeze(0)
+    seq_tensor = seq_tensor.to(device)
+    
+    model.eval()
+    with torch.no_grad():
+        output = model(seq_tensor)
+    
+    _, predicted_stage = torch.max(output.data, 1)
+    return predicted_stage.item(), filtered_dates
+
 # Example usage:
-if __name__ == "__main__":
-    # Example parameters (adjust these as needed)
-    tiff_folder = "./data/sentinel_data"
-    pixel_coordinate = (5, 5)  # Example (x, y) coordinate
+# if __name__ == "__main__":
+#     # Example parameters (adjust these as needed)
+#     tiff_folder = "./data/sentinel_data"
+#     pixel_coordinate = (5, 5)  # Example (x, y) coordinate
 
-    model = PhenologyRNNModel()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    loaded_checkpoint = torch.load('./data/model_wieghts/narc_satellite_phen_model.pth', map_location=device)
-    model.load_state_dict(loaded_checkpoint['model'])
+#     model = PhenologyRNNModel()
+#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#     loaded_checkpoint = torch.load('./data/model_wieghts/narc_satellite_phen_model.pth', map_location=device)
+#     model.load_state_dict(loaded_checkpoint['model'])
 
-    predicted_stage, dates = predict_phenological_stage_one_pixel(tiff_folder, pixel_coordinate, model, device)
-    if predicted_stage is not None:
-        print("Predicted Phenological Stage:", predicted_stage, PHENOLOGY_STAGES[predicted_stage])
-        print("Feature Dates:", len(dates), dates)
+#     predicted_stage, dates = predict_phenological_stage_one_pixel(tiff_folder, pixel_coordinate, model, device)
+#     if predicted_stage is not None:
+#         print("Predicted Phenological Stage:", predicted_stage, PHENOLOGY_STAGES[predicted_stage])
+#         print("Feature Dates:", len(dates), dates)s

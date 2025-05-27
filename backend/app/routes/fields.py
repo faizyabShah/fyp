@@ -2,8 +2,8 @@ from flask import Blueprint, request, jsonify
 from app.database import get_db_connection
 from app.middleware.auth_middleware import authenticate_request
 from app.utils import fetch_sentinel_imagery
-from phenology_main import process_with_mask
-from yield_main import generate_predictions_and_save_csv
+from phenology_main import process_time_series_predictions
+from yield_main import generate_predictions_and_save_csv, process_yield_time_series_predictions
 from app.routes.generate import generate_text
 import pandas as pd
 import re
@@ -20,6 +20,16 @@ bbch_dict = {
     "bbch_75": "Anthesis",
     "bbch_87": "Grain Filling",
     "bbch_99": "Maturity"
+}
+
+inverted_bbch_dict = {
+    "Germination": "bbch_00",
+    "Tillering": "bbch_10",
+    "Jointing": "bbch_31",
+    "Booting/Heading": "bbch_51",  # Note: This maps to bbch_51
+    "Anthesis": "bbch_75",
+    "Grain Filling": "bbch_87",
+    "Maturity": "bbch_99"
 }
 
 
@@ -66,13 +76,14 @@ def add_field():
         field_id = None
     conn.close()
 
+    plantation_date = data['plantation_date']
 
 
 
     import threading
     thread = threading.Thread(
         target=process_sentinel_imagery,
-        args=(coordinates, user.get('email', 'user'), data['name'], field_id)
+        args=(coordinates, user.get('email', 'user'), data['name'], field_id, plantation_date)
     )
     thread.daemon = True
     thread.start()
@@ -213,86 +224,145 @@ def get_phenology_stage(field_id):
     }), 200
 
 
-def process_sentinel_imagery(polygon_coords, username, name, id):
+def process_sentinel_imagery(polygon_coords, username, name, id, plantation_date):
     try:
+
         print(f"Starting fetch_sentinel_imagery for {username}_{name}")
-        is_valid = fetch_sentinel_imagery(polygon_coords, username, name)
+        end_date_str = "2024-04-24"  # Placeholder for the end date
+        # end_date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        is_valid = fetch_sentinel_imagery(polygon_coords, username, name, plantation_date, end_date_str)
         print(f"fetch_sentinel_imagery completed with result: {is_valid}")
 
         if not is_valid:
             print(f"Invalid result from fetch_sentinel_imagery for {username}_{name}")
             return
         
-        # Rest of the function...
     except Exception as e:
         print(f"Error in process_sentinel_imagery: {str(e)}")
+        return
 
-    end_date_str = datetime.datetime.now() - datetime.timedelta(days=1)
-    end_date_str = end_date_str.strftime("%Y-%m-%d")
-
-    # insert this into the table satellite
+    # Create directories if they don't exist
+    os.makedirs(f"C:/New folder/sat_data/{username}_{name}", exist_ok=True)
+    os.makedirs(f"C:/New folder/reports/{username}_{name}", exist_ok=True)
+    
+    # Process phenology for all time points
+    print("Processing phenology time series")
+    try:
+        phenology_output_paths = process_time_series_predictions(
+            tiff_dir=f"C:/New folder/backend/app/data/{username}_{name}/imagery",
+            output_dir=f"C:/New folder/backend/app/data/{username}_{name}/phenology",
+        )
+        print(f"Generated {len(phenology_output_paths)} phenology maps")
+    except Exception as e:
+        print(f"Error processing phenology: {str(e)}")
+        phenology_output_paths = []
+    
+    # Process yield for all time points
+    print("Processing yield time series")
+    try:
+        yield_output_paths, field_level_predictions = process_yield_time_series_predictions(
+            tiff_dir=f"C:/New folder/backend/app/data/{username}_{name}/imagery",
+            output_dir=f"C:/New folder/backend/app/data/{username}_{name}/yield",
+            sowing_date=plantation_date,
+        )
+        print(f"Generated {len(yield_output_paths)} yield maps")
+    except Exception as e:
+        print(f"Error processing yield: {str(e)}")
+        yield_output_paths = []
+        field_level_predictions = {}
+    
+    # Also run the original field-level yield prediction (for backward compatibility)
+    try:
+        generate_predictions_and_save_csv(
+            tiff_dir=f"C:/New folder/backend/app/data/{username}_{name}/imagery",
+            output_dir=f"C:/New folder/sat_data/{username}_{name}",
+            sowing_date=plantation_date,
+        )
+    except Exception as e:
+        print(f"Error generating field-level yield CSV: {str(e)}")
+    
+    # Create a dictionary to store data for each observation date
+    date_data = {}
+    
+    # Process phenology data for each date
+    for date_str, csv_path, tiff_path, viz_path in phenology_output_paths:
+        if date_str not in date_data:
+            date_data[date_str] = {"date": date_str}
+        
+        try:
+            # Read CSV to get dominant phenology stage
+            phen_df = pd.read_csv(csv_path)
+            if not phen_df.empty:
+                stage_counts = phen_df['stage_name'].value_counts()
+                dominant_stage = stage_counts.idxmax()
+                stage_name = bbch_dict.get(dominant_stage, "Unknown")
+                date_data[date_str]["phenology_stage"] = stage_name
+                date_data[date_str]["phenology_csv"] = csv_path
+                date_data[date_str]["phenology_tiff"] = tiff_path
+                date_data[date_str]["phenology_viz"] = viz_path
+        except Exception as e:
+            print(f"Error processing phenology data for {date_str}: {str(e)}")
+    
+    # Process yield data for each date
+    for date_str, tiff_path, viz_path, field_yield in yield_output_paths:
+        if date_str not in date_data:
+            date_data[date_str] = {"date": date_str}
+        
+        print("ONCE MORE: ", field_yield)
+        if field_yield is not None:
+            date_data[date_str]["yield"] = field_yield
+            date_data[date_str]["yield_tiff"] = tiff_path
+            date_data[date_str]["yield_viz"] = viz_path
+    
+    # Insert data into the satellite table for each observation date
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    cursor.execute('INSERT INTO satellite (field_id, field_name, user_email, observation_date) VALUES (?, ?, ?, ?)',
-                   (id, name, username, end_date_str))
-    conn.commit()
-    conn.close()
-
-    print("predicting")
-
-    if not os.path.exists(f"C:/New folder/sat_data/{username}_{name}"):
-        os.makedirs(f"C:/New folder/sat_data/{username}_{
-            name}"
-            )
-        
-    process_with_mask(
-        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
-        output_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
-    )
+    
+    for date_str, data in date_data.items():
+        phenology_stage = data.get("phenology_stage", None)
+        yield_value = data.get("yield", None)
+        yield_value = float(yield_value) if yield_value is not None else None
 
         
-    generate_predictions_and_save_csv(
-        tiff_dir=f"C:/New folder/frontend/public/media/{username}_{name}",
-        output_dir=f"C:/New folder/sat_data/{username}_{name}",
-    )
+        # Check if an entry already exists for this field and date
+        cursor.execute('SELECT id FROM satellite WHERE field_id = ? AND observation_date = ?', 
+                     (id, date_str))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing record
+            cursor.execute('''
+                UPDATE satellite 
+                SET phenology_stage = ?, yield = ? 
+                WHERE field_id = ? AND observation_date = ?
+            ''', (phenology_stage, yield_value, id, date_str))
+        else:
+            # Insert new record
+            cursor.execute('''
+                INSERT INTO satellite 
+                (field_id, field_name, user_email, observation_date, phenology_stage, yield) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (id, name, username, date_str, phenology_stage, yield_value))
     
-    
-    print("reading csv")
-
-    yield_csv_file_path = f"C:/New folder/sat_data/{username}_{name}/yield_report.csv"
-    phen_csv_file_path =  f"C:/New folder/frontend/public/media/{username}_{name}/{end_date_str}.csv"
-    df = pd.read_csv(phen_csv_file_path)
-    stage_counts = df['stage_name'].value_counts()
-    
-    
-    stage = stage_counts.idxmax()
-
-    stage_name = bbch_dict.get(stage, ["Unknown"])
-
-    df2 = pd.read_csv(yield_csv_file_path)
-    # select the last row
-    last_row = df2.iloc[-1]
-    yield_value = last_row['yield']
-
-
-    print("sending query")
-    query = f"Give me recommendations for the crop at stage {stage} or {stage_name}"
-
-    generate_text(query, f"C:/New folder/reports/{username}_{name}", end_date_str)
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    print(stage_name)
-    print(yield_value)
-    yield_value = float(yield_value)
-
-    cursor.execute('UPDATE satellite SET phenology_stage = ?, yield = ? WHERE field_id = ?', (stage_name, yield_value, id))
-
-    cursor.execute('INSERT INTO reports (field_id, report_date) VALUES (?, ?)', (id, end_date_str))
     conn.commit()
+    
+    # Generate report for the most recent date
+    try:
+        latest_date = max(date_data.keys()) if date_data else datetime.datetime.now().strftime("%Y-%m-%d")
+        latest_phenology = date_data.get(latest_date, {}).get("phenology_stage", "Unknown")
+
+        phenology_bbch = inverted_bbch_dict.get(latest_phenology, "Unknown")
+        
+        print(f"Generating report for {latest_date} with phenology {latest_phenology}")
+        query = f"Give me recommendations for the wheat crop at stage {phenology_bbch}"
+        generate_text(query, f"C:/New folder/reports/{username}_{name}", latest_date)
+        
+        # Record the report generation
+        cursor.execute('INSERT INTO reports (field_id, report_date) VALUES (?, ?)', 
+                     (id, latest_date))
+        conn.commit()
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+    
     conn.close()
-
-
-
+    print(f"Completed processing for field {id}")

@@ -16,7 +16,12 @@ html {
   scroll-behavior: smooth;
 }
 
+body > .skiptranslate {
+  display: none !important;
+}
+
 body {
+  top:0px !important;
     /* background-image: url('../public/media/background.png'); */
     /*make sure the width spans othe whole vw*/
 

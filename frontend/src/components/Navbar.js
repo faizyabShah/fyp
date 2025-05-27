@@ -9,6 +9,24 @@ const Navbar = ({ fixed, dashboard, token, fromhome }) => {
   const [isAtTop, setIsAtTop] = useState(true);
   const [lastScrollTop, setLastScrollTop] = useState(0);
   const [scrollTimeout, setScrollTimeout] = useState(null);
+  const [isUrdu, setIsUrdu] = useState(false);
+
+  const handleLanguageChange = () => {
+    const iframe = document.querySelector('iframe.goog-te-banner-frame');
+    if (iframe) iframe.remove(); // Just in case it’s still in DOM
+
+    if (isUrdu) {
+      document.cookie = "googtrans=/en/en; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      setIsUrdu(false);
+      localStorage.setItem('language', 'en'); // Store language preference
+    } else {
+      document.cookie = "googtrans=/en/ur; path=/";
+      setIsUrdu(true);
+      localStorage.setItem('language', 'ur'); // Store language preference
+    }
+
+    window.location.reload();
+  };
 
   // Optional: for routing to other pages (e.g., signup)
   const goTo = (destination) => {
@@ -17,6 +35,12 @@ const Navbar = ({ fixed, dashboard, token, fromhome }) => {
   };
 
   useEffect(() => {
+    const storedLanguage = localStorage.getItem('language'); // Retrieve language from localStorage
+
+    if (storedLanguage === 'ur') {
+      setIsUrdu(true);
+    }
+
     const handleScroll = () => {
       const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
@@ -85,6 +109,9 @@ const Navbar = ({ fixed, dashboard, token, fromhome }) => {
                 Login
               </Link>
             )}
+            <div className="navlink" onClick={handleLanguageChange}>
+              {isUrdu ? 'EN' : 'UR'}
+            </div>
             {fromhome && <Link to="contact" smooth={true} duration={500} className="navlink">
               Contact
             </Link>}
