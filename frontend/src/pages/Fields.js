@@ -38,7 +38,7 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/fields/${field.id}`, {
+      const response = await fetch(`/fields/${field.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +314,7 @@ const ActiveFields = ({ token, fetchFields }) => {
     if (!fieldToDelete) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToDelete.id}`, {
+      const response = await fetch(`/fields/${fieldToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -355,7 +355,7 @@ const ActiveFields = ({ token, fetchFields }) => {
     if (!fieldToHarvest) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToHarvest.id}/harvest`, {
+      const response = await fetch(`/fields/${fieldToHarvest.id}/harvest`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -378,7 +378,7 @@ const ActiveFields = ({ token, fetchFields }) => {
   const fetchActiveFields = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -551,7 +551,7 @@ const HarvestedFields = ({ token, fetchFields }) => {
     if (!fieldToDelete) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToDelete.id}`, {
+      const response = await fetch(`/fields/${fieldToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -583,7 +583,7 @@ const HarvestedFields = ({ token, fetchFields }) => {
     if (!fieldToHarvest) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToHarvest.id}/harvest`, {
+      const response = await fetch(`/fields/${fieldToHarvest.id}/harvest`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -606,7 +606,7 @@ const HarvestedFields = ({ token, fetchFields }) => {
   const fetchHarvestedFields = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -730,7 +730,7 @@ const Fields = ({ token, viewType = 'active' }) => {
   const fetchFields = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`

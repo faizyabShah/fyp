@@ -166,7 +166,7 @@ const EnhancedVegetationTrends = ({ selectedField, token }) => {
       setError(null);
       
       try {
-        const response = await fetch(`http://localhost:5000/satellite/${selectedField.id}/timeseries`, {
+        const response = await fetch(`/satellite/${selectedField.id}/timeseries`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -24,7 +24,7 @@ const Stats = ({
 
   const fetchUserFields = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/fields`, {
+      const response = await fetch(`/fields`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -49,7 +49,7 @@ const Stats = ({
     if (!selectedField) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/fields/${selectedField.id}/phenology_stage`, {
+      const response = await fetch(`/fields/${selectedField.id}/phenology_stage`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +79,7 @@ const Stats = ({
     if (!selectedField) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/reports/${selectedField.id}`, {
+      const response = await fetch(`/reports/${selectedField.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
