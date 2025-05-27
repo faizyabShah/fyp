@@ -127,7 +127,7 @@ const Chatbot = () => {
         const fetchChatbotResponse = async (message, phen_stage) => {
             const promptText = `Your name is Farmsense, Remember this name. You are supposed to be a helpful assistant for agriculture related queries.`;
             try {
-                const response = await fetch('http://localhost:5000/generate', {
+                const response = await fetch('/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

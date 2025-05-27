@@ -32,7 +32,7 @@ const AddFieldForm = ({ token, setUserFieldData, navigate, onSuccess }) => {
         };
 
         try {
-            const response = await fetch('http://localhost:5000/fields', {
+            const response = await fetch('/fields', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

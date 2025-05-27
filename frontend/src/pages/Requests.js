@@ -21,7 +21,7 @@ const AddRequestForm = ({ token, fields, onClose, updateRequestsList }) => {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:5000/requests', {
+      const response = await fetch('/requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ const Requests = ({ token }) => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/requests', {
+      const response = await fetch('/requests', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -136,7 +136,7 @@ const Requests = ({ token }) => {
   // Fetch fields for the dropdown
   const fetchFields = async () => {
     try {
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -176,7 +176,7 @@ const Requests = ({ token }) => {
     if (!requestToDelete) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/requests/${requestToDelete.id}`, {
+      const response = await fetch(`/requests/${requestToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

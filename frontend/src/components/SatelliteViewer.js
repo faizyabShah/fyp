@@ -36,7 +36,7 @@ const SatelliteViewer = ({ selectedField, token }) => {
     setError(null);
     
     try {
-      let url = `http://localhost:5000/satellite/${selectedField.id}`;
+      let url = `/satellite/${selectedField.id}`;
       if (date) {
         url += `?date=${date}`;
       }

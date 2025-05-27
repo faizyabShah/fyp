@@ -25,7 +25,7 @@ const UAV = ({
   // Fetch user's fields
   const fetchUserFields = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/fields`, {
+      const response = await fetch(`/fields`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -51,7 +51,7 @@ const UAV = ({
     if (!selectedField) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/reports/27`, {
+      const response = await fetch(`/reports/27`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -74,7 +74,7 @@ const UAV = ({
       if (!selectedField) return;
   
       try {
-        const response = await fetch(`http://localhost:5000/fields/${selectedField.id}/phenology_stage`, {
+        const response = await fetch(`/fields/${selectedField.id}/phenology_stage`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

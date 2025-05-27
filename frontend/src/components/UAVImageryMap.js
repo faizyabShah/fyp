@@ -784,7 +784,7 @@ const UAVImageryMap = ({ token, fieldId, initialDate = null }) => {
       setError(null);
       
       try {
-        const response = await fetch(`http://localhost:5000/satellite/date/${selectedDate}/view/${activeView}`, {
+        const response = await fetch(`/satellite/date/${selectedDate}/view/${activeView}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
