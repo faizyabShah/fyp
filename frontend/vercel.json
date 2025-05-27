@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "http://10.3.16.71:5000/$1"
+      "destination": "https://f13f-111-68-101-87.ngrok-free.app/$1"
     }
   ]
 }
