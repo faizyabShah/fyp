@@ -1,2 +1,5 @@
 node_modules
 __pycache__
+backend/app/data
+reports
+sat_data

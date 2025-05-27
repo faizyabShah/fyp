@@ -3,7 +3,7 @@ import LeafletMap from './LeafletMap';
 import ErrorPopup from './ErrorPopup';
 import '../styles/AddFieldForm.css';
 
-const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
+const AddFieldForm = ({ token, setUserFieldData, navigate, onSuccess }) => {
     const [coordinates, setCoordinates] = useState(null);
     const [area, setArea] = useState(null);
     const [crop, setCrop] = useState('');
@@ -13,10 +13,6 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
     const [error, setError] = useState(null);
 
     const closeError = () => setError(null);
-
-    const consolee = () => {
-        console.log(coordinates);
-    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,7 +32,7 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
         };
 
         try {
-            const response = await fetch('http://localhost:5000/fields', {
+            const response = await fetch('/fields', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -48,7 +44,7 @@ const AddFieldForm = ({ token, setUserFieldData, navigate }) => {
             if (response.ok) {
                 const newField = await response.json();
                 setUserFieldData(prevFields => [...prevFields, newField]);
-                alert('Field added successfully!');
+                onSuccess(); // Call the onSuccess function passed as a prop
             } else {
                 console.error('Failed to add field');
                 alert('Error adding field!');

@@ -1,162 +1,182 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet-draw';
+import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
-import 'leaflet-control-geocoder';
 
-const GeocoderControl = () => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!L.Control.Geocoder) {
-      console.error('Leaflet Control Geocoder not found.');
-      return;
-    }
-
-    // Create the geocoder control with desired options
-    const geocoder = L.Control.geocoder({
-      defaultMarkGeocode: false,  // We'll handle the marker manually
-    })
-      .on('markgeocode', function (e) {
-        const center = e.geocode.center;
-        const targetZoom = 8; // Desired zoom level if current zoom is less than this
-        const currentZoom = map.getZoom();
-
-        if (currentZoom < targetZoom) {
-          map.setView(center, targetZoom);
-        } else {
-          map.panTo(center);
-        }
-
-        // Optionally, add a marker at the found location
-        L.marker(center).addTo(map);
-      })
-      .addTo(map);
-
-    return () => {
-      map.removeControl(geocoder);
-    };
-  }, [map]);
-
-  return null;
-};
-
-// Function to calculate the area of a polygon in square meters
-const calculatePolygonArea = (latlngs) => {
-  return L.GeometryUtil.geodesicArea(latlngs[0]);
-};
+// This approach uses a direct DOM manipulation strategy rather than 
+// relying on React-Leaflet for Leaflet Draw integration
 
 const LeafletMap = ({ setCoordinates, setArea }) => {
-  const [polygon, setPolygon] = useState(null);
-
-  // Custom hook to add drawing functionality
-  const MapInteraction = () => {
-    const map = useMap();
-
-    useEffect(() => {
-      // Make sure GeometryUtil is available
-      if (!L.GeometryUtil) {
-        // Add Leaflet.GeometryUtil plugin if not already included
-        L.GeometryUtil = {
-          geodesicArea: function(latLngs) {
-            let area = 0;
-            let d2r = Math.PI / 180;
-            let points = latLngs;
-            
-            for (let i = 0, len = points.length; i < len; i++) {
-              let p1 = points[i];
-              let p2 = points[(i + 1) % len];
-              
-              area += ((p2.lng - p1.lng) * d2r) * 
-                     (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
-            }
-            area = area * 6378137.0 * 6378137.0 / 2.0;
-            return Math.abs(area);
-          }
-        };
-      }
-
-      const drawnItems = new L.FeatureGroup();
-      map.addLayer(drawnItems);
-
-      const drawControl = new L.Control.Draw({
-        edit: {
-          featureGroup: drawnItems,
-        },
-        draw: {
-          polygon: true,
-          polyline: false,
-          rectangle: false,
-          circle: false,
-          marker: false,
-        },
-      });
-      map.addControl(drawControl);
-
-      map.on('draw:created', (e) => {
-        const layer = e.layer;
-        drawnItems.addLayer(layer);
-        const latlngs = layer.getLatLngs();
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const drawControlRef = useRef(null);
+  const drawnItemsRef = useRef(null);
+  
+  useEffect(() => {
+    // Dynamic import of leaflet and plugins
+    const loadLeaflet = async () => {
+      try {
+        // First import Leaflet
+        const L = await import('leaflet');
         
-        // Calculate area in square meters
-        const areaSqMeters = calculatePolygonArea(latlngs);
+        // Then add it to window so plugins can find it
+        window.L = L.default || L;
         
-        // Convert to hectares (1 hectare = 10,000 square meters)
-        const areaHectares = areaSqMeters / 10000;
+        // Then import the plugins
+        await import('leaflet-draw');
+        await import('leaflet-control-geocoder');
         
-        console.log('Polygon area:', areaHectares.toFixed(2), 'hectares');
-        
-        setPolygon(latlngs);
-        setCoordinates(latlngs);
-        
-        // Pass the area back to the parent component
-        if (setArea) {
-          setArea(areaHectares);
+        // Check if everything is available
+        if (!window.L.Control.Draw) {
+          console.error('Leaflet Draw not found after loading');
+          
+          // Try loading from CDN as fallback
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js';
+          script.onload = initializeMap;
+          document.head.appendChild(script);
+        } else {
+          // Initialize map if all plugins are available
+          initializeMap();
         }
-      });
-
-      // Also handle edit events to recalculate area
-      map.on('draw:edited', (e) => {
-        const layers = e.layers;
-        layers.eachLayer((layer) => {
-          const latlngs = layer.getLatLngs();
-          
-          // Recalculate area
-          const areaSqMeters = calculatePolygonArea(latlngs);
-          const areaHectares = areaSqMeters / 10000;
-          
-          console.log('Updated polygon area:', areaHectares.toFixed(2), 'hectares');
-          
-          setPolygon(latlngs);
-          setCoordinates(latlngs);
-          
-          // Pass the updated area back to the parent component
-          if (setArea) {
-            setArea(areaHectares);
+      } catch (error) {
+        console.error('Failed to load Leaflet or plugins:', error);
+      }
+    };
+    
+    // Initialize the map and plugins
+    const initializeMap = () => {
+      const L = window.L;
+      
+      // Only initialize if container exists and map doesn't
+      if (mapContainerRef.current && !mapInstanceRef.current) {
+        // Create map instance
+        mapInstanceRef.current = L.map(mapContainerRef.current).setView([20, 0], 2);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapInstanceRef.current);
+        
+        // Setup GeometryUtil if not available
+        if (!L.GeometryUtil) {
+          L.GeometryUtil = {
+            geodesicArea: function(latLngs) {
+              let area = 0;
+              let d2r = Math.PI / 180;
+              let points = latLngs;
+              
+              for (let i = 0, len = points.length; i < len; i++) {
+                let p1 = points[i];
+                let p2 = points[(i + 1) % len];
+                
+                area += ((p2.lng - p1.lng) * d2r) * 
+                       (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+              }
+              area = area * 6378137.0 * 6378137.0 / 2.0;
+              return Math.abs(area);
+            }
+          };
+        }
+        
+        // Initialize FeatureGroup for drawn items
+        drawnItemsRef.current = new L.FeatureGroup();
+        mapInstanceRef.current.addLayer(drawnItemsRef.current);
+        
+        // Add geocoder
+        if (L.Control.Geocoder) {
+          const geocoder = L.Control.geocoder({
+            defaultMarkGeocode: false
+          })
+            .on('markgeocode', function(e) {
+              const center = e.geocode.center;
+              const targetZoom = 8;
+              const currentZoom = mapInstanceRef.current.getZoom();
+              
+              if (currentZoom < targetZoom) {
+                mapInstanceRef.current.setView(center, targetZoom);
+              } else {
+                mapInstanceRef.current.panTo(center);
+              }
+              
+              L.marker(center).addTo(mapInstanceRef.current);
+            })
+            .addTo(mapInstanceRef.current);
+        }
+        
+        // Add draw control
+        try {
+          if (L.Control.Draw) {
+            drawControlRef.current = new L.Control.Draw({
+              edit: {
+                featureGroup: drawnItemsRef.current
+              },
+              draw: {
+                polygon: true,
+                polyline: false,
+                rectangle: false,
+                circle: false,
+                marker: false
+              }
+            });
+            
+            mapInstanceRef.current.addControl(drawControlRef.current);
+            
+            // Add event handlers
+            mapInstanceRef.current.on('draw:created', function(e) {
+              const layer = e.layer;
+              drawnItemsRef.current.addLayer(layer);
+              const latlngs = layer.getLatLngs();
+              
+              // Calculate area
+              const areaSqMeters = L.GeometryUtil.geodesicArea(latlngs[0]);
+              const areaHectares = areaSqMeters / 10000;
+              
+              if (setCoordinates) setCoordinates(latlngs);
+              if (setArea) setArea(areaHectares);
+            });
+            
+            mapInstanceRef.current.on('draw:edited', function(e) {
+              const layers = e.layers;
+              layers.eachLayer(function(layer) {
+                const latlngs = layer.getLatLngs();
+                
+                // Recalculate area
+                const areaSqMeters = L.GeometryUtil.geodesicArea(latlngs[0]);
+                const areaHectares = areaSqMeters / 10000;
+                
+                if (setCoordinates) setCoordinates(latlngs);
+                if (setArea) setArea(areaHectares);
+              });
+            });
+            
+            console.log('Draw control initialized successfully');
+          } else {
+            console.error('L.Control.Draw is not available');
           }
-        });
-      });
-
-      return () => {
-        map.removeControl(drawControl);
-      };
-    }, [map]);
-
-    return null;
-  };
-
+        } catch (error) {
+          console.error('Error initializing draw control:', error);
+        }
+      }
+    };
+    
+    // Start the loading process
+    loadLeaflet();
+    
+    // Cleanup
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [setCoordinates, setArea]);
+  
   return (
-    <MapContainer center={[20, 0]} zoom={2} style={{ maxHeight: '300px', width: '100%' }}>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      <GeocoderControl />
-      <MapInteraction />
-    </MapContainer>
+    <div 
+      ref={mapContainerRef} 
+      style={{ height: '300px', width: '100%', maxHeight: '300px' }}
+    />
   );
 };
 

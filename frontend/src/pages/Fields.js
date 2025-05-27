@@ -6,6 +6,8 @@ import AddFieldForm from '../components/AddFieldForm';
 import LeafletMap from '../components/LeafletMap';
 import '../styles/Fields.css';
 import { useNavigate } from 'react-router-dom';
+import MessageDialog from '../components/MessageDialog';
+
 
 // Field Edit Form component - shared by both ActiveFields and HarvestedFields
 const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
@@ -36,7 +38,7 @@ const FieldEditForm = ({ field, token, onClose, updateFieldsList }) => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/fields/${field.id}`, {
+      const response = await fetch(`/fields/${field.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -189,12 +191,12 @@ const FieldCard = ({ field, onEdit, onDelete, onToggleHarvest }) => {
           <div className="health-bar">
             <div 
               className="health-level" 
-              style={{ width: `${field.healthPercent || 85}%` }}
+              style={{ width: `${field.healthPercent || 0}%` }}
             ></div>
           </div>
           <div className="health-label">
             <FaLeaf className="icon" />
-            <span>Crop Health: {field.healthPercent || 85}%</span>
+            <span>Crop Health: {field.healthPercent || 0}%</span>
           </div>
         </div>
       </div>
@@ -239,6 +241,16 @@ const DeleteConfirmModal = ({ showModal, onClose, fieldName, onConfirm }) => (
   </Modal>
 );
 
+const AddFieldMessage = ({ show, onClose }) => (
+  <MessageDialog
+    message="Field added successfully!"
+    type="success"
+    onClose={onClose}
+  />
+);
+
+
+
 // Harvest Toggle Confirmation Modal - shared component
 const HarvestConfirmModal = ({ showModal, onClose, field, onConfirm }) => (
   <Modal showModal={showModal} onClose={onClose}>
@@ -271,6 +283,7 @@ const ActiveFields = ({ token, fetchFields }) => {
   const [showHarvestConfirm, setShowHarvestConfirm] = useState(false);
   const [fieldToHarvest, setFieldToHarvest] = useState(null);
   const [userFieldData, setUserFieldData] = useState([]);
+  const [showAddFieldMessage, setShowAddFieldMessage] = useState(false);
   
   const navigate = useNavigate();
 
@@ -301,7 +314,7 @@ const ActiveFields = ({ token, fetchFields }) => {
     if (!fieldToDelete) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToDelete.id}`, {
+      const response = await fetch(`/fields/${fieldToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -309,7 +322,7 @@ const ActiveFields = ({ token, fetchFields }) => {
       });
 
       if (response.ok) {
-        fetchFields(); // Refresh fields after deletion
+        fetchActiveFields(); // Refresh fields after deletion
         closeDeleteConfirm();
       } else {
         console.error('Failed to delete field');
@@ -329,11 +342,20 @@ const ActiveFields = ({ token, fetchFields }) => {
     setFieldToHarvest(null);
   };
 
+  const showAddMessage = () => {
+    setShowAddFieldMessage(true);
+    // Auto-hide the message after 3 seconds
+    setTimeout(() => {
+      setShowAddFieldMessage(false);
+    }, 3000);
+  };
+  
+
   const confirmHarvest = async () => {
     if (!fieldToHarvest) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToHarvest.id}/harvest`, {
+      const response = await fetch(`/fields/${fieldToHarvest.id}/harvest`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -343,7 +365,7 @@ const ActiveFields = ({ token, fetchFields }) => {
       });
 
       if (response.ok) {
-        fetchFields(); // Refresh fields after update
+        fetchActiveFields(); // Refresh fields after update
         closeHarvestConfirm();
       } else {
         console.error('Failed to update harvest status');
@@ -356,7 +378,7 @@ const ActiveFields = ({ token, fetchFields }) => {
   const fetchActiveFields = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -433,7 +455,13 @@ const ActiveFields = ({ token, fetchFields }) => {
         )}
       </div>
       
-      
+      {showAddFieldMessage && (
+        <MessageDialog 
+          type="sucess"
+          message="Field added successfully!"
+          onClose={() => setShowAddFieldMessage(false)}
+        />
+      )}
     
       {showModal && currentField && (
         <Modal showModal={showModal} onClose={closeModal}>
@@ -523,7 +551,7 @@ const HarvestedFields = ({ token, fetchFields }) => {
     if (!fieldToDelete) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToDelete.id}`, {
+      const response = await fetch(`/fields/${fieldToDelete.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -555,7 +583,7 @@ const HarvestedFields = ({ token, fetchFields }) => {
     if (!fieldToHarvest) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/fields/${fieldToHarvest.id}/harvest`, {
+      const response = await fetch(`/fields/${fieldToHarvest.id}/harvest`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -578,7 +606,7 @@ const HarvestedFields = ({ token, fetchFields }) => {
   const fetchHarvestedFields = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -702,7 +730,7 @@ const Fields = ({ token, viewType = 'active' }) => {
   const fetchFields = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/fields', {
+      const response = await fetch('/fields', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -7,6 +7,7 @@ import torch.nn as nn
 import rasterio
 from datetime import datetime
 import traceback
+import ast
 
 # Define the channel names and normalization values for the satellite bands.
 CHANNELS = ["blu", "grn", "nir", "re1", "re2", "re3", "red", "sw1", "sw2"]
@@ -40,7 +41,7 @@ class YieldRNNModel(nn.Module):
         x = self.fc(rnn_outputs[:, -1, :])
         return x
 
-def read_field_tiff_features_yield(tiff_dir, band_indices, channels):
+def read_field_tiff_features_yield(tiff_dir, band_indices, channels, sowing_date=None):
     """
     Read TIFF files from a directory, compute the average value for each selected band 
     over the entire field, and compute days from sowing (using the first file as sowing date).
@@ -78,7 +79,7 @@ def read_field_tiff_features_yield(tiff_dir, band_indices, channels):
     
     sequence_features = []
     sequence_dates = []
-    sowing_date = None
+    sowing_date = datetime.strptime(sowing_date, '%Y-%m-%d') if sowing_date else None
     for date_obj, file in file_date_tuples:
         tiff_path = os.path.join(tiff_dir, file)
         try:
@@ -111,6 +112,82 @@ def read_field_tiff_features_yield(tiff_dir, band_indices, channels):
     
     return sequence_features, sequence_dates
 
+# New function for per-pixel features
+def read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowing_date=None):
+    """
+    Read TIFF files from a directory, extract values for a specific pixel for each selected band,
+    and compute days from sowing (using the first file as sowing date).
+    
+    Args:
+        tiff_dir (str): Directory containing TIFF files.
+        pixel (tuple): Pixel coordinates (x, y) to extract values from.
+        band_indices (list): List of band indices to extract.
+        channels (list): List of channel names corresponding to these bands.
+        
+    Returns:
+        sequence_features (list): List of feature vectors, each of length 10:
+            [days_from_sowing, pixel_blu, pixel_grn, ..., pixel_sw2]
+        sequence_dates (list): List of datetime objects corresponding to each TIFF file.
+    """
+    # Ensure pixel is a tuple (if passed as string, convert it)
+    if isinstance(pixel, str):
+        pixel = ast.literal_eval(pixel)
+        
+    # List TIFF files in the directory
+    files = [f for f in os.listdir(tiff_dir) if f.endswith('.tif') or f.endswith('.tiff')]
+    
+    # Use regex to extract a date in the format YYYY-MM-DD from the filename.
+    date_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2})\.tiff$')
+    sowing_date = datetime.strptime(sowing_date, '%Y-%m-%d') if sowing_date else None
+    file_date_tuples = []
+    for file in files:
+        match = date_pattern.fullmatch(file)
+        if match:
+            date_str = match.group(1)  # Captures the date portion
+            try:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                file_date_tuples.append((date_obj, file))
+            except ValueError:
+                print(f"Skipping {file}: Could not parse date {date_str}")
+    
+    # Sort files by date.
+    file_date_tuples.sort(key=lambda x: x[0])
+    
+    sequence_features = []
+    sequence_dates = []
+    
+    for date_obj, file in file_date_tuples:
+        tiff_path = os.path.join(tiff_dir, file)
+        try:
+            with rasterio.open(tiff_path) as src:
+                image_data = src.read()  # shape: [bands, height, width]
+                if image_data.shape[0] < max(band_indices) + 1:
+                    print(f"Skipping {file}: Not enough bands (found {image_data.shape[0]} bands)")
+                    continue
+                
+                # Extract pixel values for each specified band
+                x, y = pixel
+                pixel_values = []
+                for idx in band_indices:
+                    pixel_val = image_data[idx, y, x]
+                    pixel_values.append(pixel_val)
+                
+                # Set sowing date from the first file.
+                if sowing_date is None:
+                    sowing_date = date_obj
+                days_from_sowing = (date_obj - sowing_date).days
+                
+                # Create feature vector: [days_from_sowing, pixel_blu, pixel_grn, ..., pixel_sw2]
+                feature_vector = [days_from_sowing] + pixel_values
+                sequence_features.append(feature_vector)
+                sequence_dates.append(date_obj)
+        except Exception:
+            print(f"Error processing {file} for pixel {pixel}:")
+            print(traceback.format_exc())
+            continue
+    
+    return sequence_features, sequence_dates
+
 def normalize_features_array_yield(features_list, normalization_values=NORMALIZATION_VALUES, channels=CHANNELS):
     """
     Normalize the satellite band features in the yield feature vectors.
@@ -136,7 +213,7 @@ def normalize_features_array_yield(features_list, normalization_values=NORMALIZA
     return features_array
 
 def predict_yield_field(
-    tiff_dir, model, device,
+    tiff_dir, model, device, sowing_date=None,
     band_indices=[1, 2, 7, 4, 5, 6, 3, 10, 11],
     normalization_values=NORMALIZATION_VALUES,
     channels=CHANNELS
@@ -157,7 +234,7 @@ def predict_yield_field(
         predicted_yield (float): Unnormalized predicted yield.
         dates (list): Sorted list of datetime objects corresponding to each feature vector.
     """
-    sequence_features, dates = read_field_tiff_features_yield(tiff_dir, band_indices, channels)
+    sequence_features, dates = read_field_tiff_features_yield(tiff_dir, band_indices, channels, sowing_date)
     if not sequence_features:
         print("No feature vectors were extracted.")
         return None, None
@@ -175,3 +252,96 @@ def predict_yield_field(
     normalized_yield = output.item()  # Model outputs a normalized yield value.
     predicted_yield = unnormalize_yield(normalized_yield)
     return predicted_yield, dates
+
+def predict_yield_pixel(
+    tiff_dir, pixel, model, device,
+    band_indices=[1, 2, 7, 4, 5, 6, 3, 10, 11],
+    normalization_values=NORMALIZATION_VALUES,
+    channels=CHANNELS
+):
+    """
+    Create a sequence of pixel-level yield features and predict yield using the RNN model.
+    
+    Args:
+        tiff_dir (str): Directory with TIFF files.
+        pixel (tuple): Pixel coordinates (x, y) to extract values from.
+        model (nn.Module): Trained yield RNN model.
+        device (torch.device): Device to run the model.
+        band_indices (list): List of band indices for feature extraction.
+        normalization_values (dict): Normalization values for satellite bands.
+        channels (list): List of channel names for the satellite bands.
+    
+    Returns:
+        predicted_yield (float): Unnormalized predicted yield for the pixel.
+        dates (list): Sorted list of datetime objects corresponding to each feature vector.
+    """
+    sequence_features, dates = read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels)
+    if not sequence_features:
+        return None, None
+
+    normalized_features = normalize_features_array_yield(sequence_features, normalization_values, channels)
+    
+    # Create a tensor with shape [batch_size, seq_len, input_size]
+    seq_tensor = torch.tensor(normalized_features, dtype=torch.float32).unsqueeze(0)
+    seq_tensor = seq_tensor.to(device)
+    
+    model.eval()
+    with torch.no_grad():
+        output = model(seq_tensor)
+    
+    normalized_yield = output.item()  # Model outputs a normalized yield value.
+    predicted_yield = unnormalize_yield(normalized_yield)
+    return predicted_yield, dates
+
+def predict_yield_pixel_with_date_limit(
+    tiff_dir, pixel, model, device, max_date,
+    band_indices=[1, 2, 7, 4, 5, 6, 3, 10, 11],
+    normalization_values=NORMALIZATION_VALUES,
+    channels=CHANNELS,
+    sowing_date=None
+):
+    """
+    Create a sequence of pixel-level yield features up to a specific date and predict yield.
+    
+    Args:
+        tiff_dir (str): Directory with TIFF files.
+        pixel (tuple): Pixel coordinates (x, y) to extract values from.
+        model (nn.Module): Trained yield RNN model.
+        device (torch.device): Device to run the model.
+        max_date (datetime): Only use data up to this date for prediction.
+        band_indices (list): List of band indices for feature extraction.
+        normalization_values (dict): Normalization values for satellite bands.
+        channels (list): List of channel names for the satellite bands.
+    
+    Returns:
+        predicted_yield (float): Unnormalized predicted yield for the pixel.
+        dates (list): Filtered list of datetime objects up to max_date.
+    """
+    sequence_features, dates = read_pixel_tiff_features_yield(tiff_dir, pixel, band_indices, channels, sowing_date)
+    if not sequence_features:
+        return None, None
+    
+    # Filter features and dates to only include those up to max_date
+    filtered_features = []
+    filtered_dates = []
+    for feature, date in zip(sequence_features, dates):
+        if date <= max_date:
+            filtered_features.append(feature)
+            filtered_dates.append(date)
+    
+    if not filtered_features:
+        return None, None
+
+    normalized_features = normalize_features_array_yield(filtered_features, normalization_values, channels)
+    
+    # Create a tensor with shape [batch_size, seq_len, input_size]
+    seq_tensor = torch.tensor(normalized_features, dtype=torch.float32).unsqueeze(0)
+    seq_tensor = seq_tensor.to(device)
+    
+    model.eval()
+    with torch.no_grad():
+        output = model(seq_tensor)
+    
+    normalized_yield = output.item()  # Model outputs a normalized yield value.
+    predicted_yield = unnormalize_yield(normalized_yield)
+    return predicted_yield, filtered_dates

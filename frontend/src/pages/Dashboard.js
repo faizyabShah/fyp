@@ -35,7 +35,7 @@ const Dashboard = () => {
 
     const fetchUserInfo = async () => {
       try {
-        const response = await fetch('http://localhost:5000/user', {
+        const response = await fetch('/user', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -71,7 +71,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <Chatbot />
+      {/* <Chatbot /> */}
       <Navbar fixed={false} dashboard={true} />
       <div className="col-md-3">
         <Sidebar activeTab={currentPage} setActiveTab={setCurrentPage} />
