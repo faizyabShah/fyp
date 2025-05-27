@@ -191,12 +191,12 @@ const FieldCard = ({ field, onEdit, onDelete, onToggleHarvest }) => {
           <div className="health-bar">
             <div 
               className="health-level" 
-              style={{ width: `${field.healthPercent || 85}%` }}
+              style={{ width: `${field.healthPercent || 0}%` }}
             ></div>
           </div>
           <div className="health-label">
             <FaLeaf className="icon" />
-            <span>Crop Health: {field.healthPercent || 85}%</span>
+            <span>Crop Health: {field.healthPercent || 0}%</span>
           </div>
         </div>
       </div>
@@ -241,6 +241,16 @@ const DeleteConfirmModal = ({ showModal, onClose, fieldName, onConfirm }) => (
   </Modal>
 );
 
+const AddFieldMessage = ({ show, onClose }) => (
+  <MessageDialog
+    message="Field added successfully!"
+    type="success"
+    onClose={onClose}
+  />
+);
+
+
+
 // Harvest Toggle Confirmation Modal - shared component
 const HarvestConfirmModal = ({ showModal, onClose, field, onConfirm }) => (
   <Modal showModal={showModal} onClose={onClose}>
@@ -273,6 +283,7 @@ const ActiveFields = ({ token, fetchFields }) => {
   const [showHarvestConfirm, setShowHarvestConfirm] = useState(false);
   const [fieldToHarvest, setFieldToHarvest] = useState(null);
   const [userFieldData, setUserFieldData] = useState([]);
+  const [showAddFieldMessage, setShowAddFieldMessage] = useState(false);
   
   const navigate = useNavigate();
 
@@ -331,6 +342,15 @@ const ActiveFields = ({ token, fetchFields }) => {
     setFieldToHarvest(null);
   };
 
+  const showAddMessage = () => {
+    setShowAddFieldMessage(true);
+    // Auto-hide the message after 3 seconds
+    setTimeout(() => {
+      setShowAddFieldMessage(false);
+    }, 3000);
+  };
+  
+
   const confirmHarvest = async () => {
     if (!fieldToHarvest) return;
     
@@ -377,20 +397,6 @@ const ActiveFields = ({ token, fetchFields }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const showAddMessage = () => {
-    const message = 'Field added successfully!';
-    const type = 'success';
-    const duration = 3000; // 3 seconds
-    const messageDialog = (
-      <MessageDialog
-        message={message}
-        type={type}
-        onClose={() => setUserFieldData([])} // Clear the message after closing
-      />
-    );
-    setUserFieldData(messageDialog);
   };
 
   useEffect(() => {
@@ -449,7 +455,13 @@ const ActiveFields = ({ token, fetchFields }) => {
         )}
       </div>
       
-      
+      {showAddFieldMessage && (
+        <MessageDialog 
+          type="sucess"
+          message="Field added successfully!"
+          onClose={() => setShowAddFieldMessage(false)}
+        />
+      )}
     
       {showModal && currentField && (
         <Modal showModal={showModal} onClose={closeModal}>
@@ -489,7 +501,6 @@ const ActiveFields = ({ token, fetchFields }) => {
             onSuccess={() => {
               fetchActiveFields();
               closeAddFieldForm();
-              showAddMessage();
             }}
           />
         </Modal>

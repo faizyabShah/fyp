@@ -10,6 +10,7 @@
   animation: fadeIn 0.7s ease-out forwards;
   overflow: hidden;
   position: relative;
+  min-height: 720px;
 }
 
 .recommendation-summary-container:hover {

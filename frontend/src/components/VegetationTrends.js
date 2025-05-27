@@ -323,32 +323,34 @@ const EnhancedVegetationTrends = ({ selectedField, token }) => {
   };
 
   // Calculate min and max values for chart scaling
-  const getMinMaxValues = () => {
-    if (!filteredData || !filteredData.length) return { min: 0, max: 1 };
-    
-    const allValues = [];
-    filteredData.forEach(item => {
-      if (selectedIndices.includes('ndvi') && item.ndvi !== null && !isNaN(item.ndvi)) {
-        allValues.push(item.ndvi);
-      }
-      if (selectedIndices.includes('savi') && item.savi !== null && !isNaN(item.savi)) {
-        allValues.push(item.savi);
-      }
-    });
-    
-    if (!allValues.length) return { min: 0, max: 1 };
-    
-    // Add some padding to the min/max
-    let min = Math.min(...allValues) - 0.05;
-    let max = Math.max(...allValues) + 0.05;
-    
-    // Ensure min doesn't go below -0.1 (typical lower bound for these indices)
-    min = Math.max(min, -0.1);
-    // Ensure max doesn't exceed 1 (typical upper bound for these indices)
-    max = Math.min(max, 1);
-    
-    return { min, max };
-  };
+const getMinMaxValues = () => {
+  if (!filteredData || !filteredData.length) return { min: 0, max: 1 };
+  
+  const allValues = [];
+  filteredData.forEach(item => {
+    if (selectedIndices.includes('ndvi') && item.ndvi !== null && !isNaN(item.ndvi)) {
+      allValues.push(item.ndvi);
+    }
+    if (selectedIndices.includes('savi') && item.savi !== null && !isNaN(item.savi)) {
+      allValues.push(item.savi);
+    }
+  });
+  
+  if (!allValues.length) return { min: 0, max: 1 };
+  
+  // Add some padding to the min/max
+  let min = Math.min(...allValues) - 0.05;
+  let max = Math.max(...allValues) + 0.05;
+  
+  // FIXED: Ensure Y-axis always includes at least the range from 0 to 1
+  min = Math.min(min, 0); // Ensure min is at most 0
+  max = Math.max(max, 1); // Ensure max is at least 1
+  
+  // For values below 0 or above 1, we still respect them
+  // but we make sure our range INCLUDES 0 to 1 regardless
+  
+  return { min, max };
+};
 
   const handleToggleIndex = (indexId) => {
     setSelectedIndices(prev => {
@@ -724,9 +726,10 @@ const EnhancedVegetationTrends = ({ selectedField, token }) => {
       
       <div className="all-controls-container">
         <div className="metrics-and-controls-wrapper">
-          {/* Compact metrics cards now in same row as other controls */}
-          <div className="compact-metrics">
-            {selectedIndices.includes('ndvi') && (
+
+          <div className="controls-section">
+            <div className="control-group sp">
+              {selectedIndices.includes('ndvi') && (
               <CompactInfoCard
                 title="Avg. NDVI"
                 value={stats.ndvi.avg}
@@ -745,9 +748,7 @@ const EnhancedVegetationTrends = ({ selectedField, token }) => {
                 trend={stats.savi.trend}
               />
             )}
-          </div>
-
-          <div className="controls-section">
+            </div>
             <div className="control-group">
               <h4>Chart Type</h4>
               <ChartTypeSelector selectedType={chartType} onTypeChange={setChartType} />

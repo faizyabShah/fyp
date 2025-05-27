@@ -157,3 +157,62 @@ def get_satellite_timeseries(field_id):
         
     except Exception as e:
         return jsonify({'error': f'Error reading indices data: {str(e)}'}), 500
+    
+
+# from flask import Blueprint, request, jsonify
+# import os
+# import base64
+
+# satellite_bp = Blueprint('satellite', __name__)
+
+BASE_DIR = "C:/New folder/backend/app/data"
+
+# Existing routes...
+
+@satellite_bp.route('/satellite/date/<date>/view/<view_type>', methods=['GET'])
+def get_satellite_view_by_date(date, view_type):
+    """Return a specific satellite imagery view for a given date."""
+    # Get the data directory from the query parameter or use default
+    data_dir = "uav"
+
+    # Check if the view type is valid
+    valid_view_types = ['rgb', 'false_color', 'ndvi', 'phenology']
+    if view_type not in valid_view_types:
+        return jsonify({'error': f'Invalid view type. Must be one of: {", ".join(valid_view_types)}'}), 400
+
+    base_path = os.path.join(BASE_DIR, data_dir)
+
+    # Check if directory exists
+    if not os.path.exists(base_path):
+        return jsonify({'error': 'Satellite data directory not found'}), 404
+
+    # Define file path for the selected view type
+    file_extensions = {
+        'rgb': '_RGB',
+        'false_color': '_falsecolor',
+        'ndvi': '_ndvi',
+        'phenology': '_phenology'
+    }
+
+    file_path = os.path.join(base_path, f"{date}{file_extensions[view_type]}_masked.tif")
+
+    # Check if file exists
+    if not os.path.exists(file_path):
+        return jsonify({'error': f'No {view_type} file found for date {date}'}), 404
+
+    try:
+        # Read and encode the file
+        with open(file_path, 'rb') as file:
+            file_data = file.read()
+            encoded_data = base64.b64encode(file_data).decode('utf-8')
+
+        # Return data with encoded file (maintaining the structure expected by client)
+        return jsonify({
+            'data_dir': data_dir,
+            'date': date,
+            'files': {
+                view_type: encoded_data
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Error reading {view_type} file: {str(e)}'}), 500

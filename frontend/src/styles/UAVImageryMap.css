@@ -4,7 +4,7 @@
   100% { background-position: 0% 50%; }
 }
 
-.satellite-viewer-container {
+.uav-viewer-container {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
   width: 100%;
@@ -14,24 +14,24 @@
   border-radius: 12px;
 }
 
-.satellite-viewer-container::before {
+.uav-viewer-container::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 5px;
-  background: linear-gradient(90deg, #27ae60, #2ecc71, #3498db, #e74c3c, #9b59b6);
+  background: linear-gradient(90deg, #e74c3c, #f39c12, #f1c40f, #2ecc71, #3498db);
   background-size: 500% 100%;
   animation: gradientFlow 15s ease infinite;
   border-radius: 12px 12px 0 0;
 }
 
 :root {
-  --sat-primary: #3498db;    /* Replacing --sat-primary */
-  --sat-primary-rgb: 52, 152, 219;  /* Replacing --sat-primary-rgb */
-  --sat-accent: #27ae60;      /* Secondary color */
-  --sat-accent-rgb: 39, 174, 96;
+  --uav-primary: #e74c3c;   
+  --uav-primary-rgb: 231, 76, 60;
+  --uav-accent: #f39c12;    
+  --uav-accent-rgb: 243, 156, 18;
   --text-dark: #2c3e50;
   --text-light: #7f8c8d;
   --border-color: #e0e0e0;
@@ -60,7 +60,7 @@
   padding: 1.25rem;
 }
 
-/* New single row layout */
+/* Single row layout */
 .controls-row {
   display: flex;
   flex-direction: row;
@@ -104,8 +104,8 @@
 }
 
 .selector-button:hover {
-  background-color: rgba(var(--sat-primary-rgb), 0.15);
-  color: var(--sat-primary);
+  background-color: rgba(var(--uav-primary-rgb), 0.15);
+  color: var(--uav-primary);
 }
 
 .selector-button.disabled {
@@ -114,10 +114,10 @@
 }
 
 .icon {
-  color: var(--sat-primary);
+  color: var(--uav-primary);
 }
 
-/* Common dropdown styles for both date and view */
+/* Common dropdown styles */
 .dropdown-menu {
   position: fixed;
   background-color: white;
@@ -128,6 +128,11 @@
   animation: fadeIn 0.3s ease-out;
   width: 280px;
   display: block !important; /* Ensure visibility */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-header {
@@ -190,11 +195,11 @@
 }
 
 .dropdown-option:hover {
-  background-color: rgba(var(--sat-primary-rgb), 0.05);
+  background-color: rgba(var(--uav-primary-rgb), 0.05);
 }
 
 .dropdown-option.active {
-  background-color: rgba(var(--sat-primary-rgb), 0.1);
+  background-color: rgba(var(--uav-primary-rgb), 0.1);
   font-weight: 500;
 }
 
@@ -202,7 +207,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--sat-primary);
+  background-color: var(--uav-primary);
   margin-right: 12px;
   flex-shrink: 0;
 }
@@ -211,8 +216,8 @@
   position: absolute;
   right: 15px;
   font-size: 0.75rem;
-  color: var(--sat-primary);
-  background-color: rgba(var(--sat-primary-rgb), 0.1);
+  color: var(--uav-primary);
+  background-color: rgba(var(--uav-primary-rgb), 0.1);
   padding: 3px 8px;
   border-radius: 12px;
 }
@@ -240,7 +245,7 @@
   height: 6px;
   -webkit-appearance: none;
   appearance: none;
-  background: linear-gradient(to right, rgba(var(--sat-primary-rgb), 0.3), var(--sat-primary));
+  background: linear-gradient(to right, rgba(var(--uav-primary-rgb), 0.3), var(--uav-primary));
   border-radius: 3px;
   outline: none;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -252,7 +257,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--sat-primary);
+  background: var(--uav-primary);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   border: 2px solid white;
@@ -262,7 +267,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--sat-primary);
+  background: var(--uav-primary);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   border: 2px solid white;
@@ -276,14 +281,14 @@
 }
 
 .controls-toggle {
-  background: linear-gradient(to right, var(--sat-primary), var(--sat-accent));
+  background: linear-gradient(to right, var(--uav-primary), var(--uav-accent));
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   font-weight: 500;
   color: white;
-  box-shadow: 0 2px 6px rgba(var(--sat-primary-rgb), 0.3);
+  box-shadow: 0 2px 6px rgba(var(--uav-primary-rgb), 0.3);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -293,23 +298,21 @@
 }
 
 .controls-toggle:hover {
-  background: linear-gradient(to right, var(--sat-accent), var(--sat-primary));
-  box-shadow: 0 3px 8px rgba(var(--sat-primary-rgb), 0.4);
+  background: linear-gradient(to right, var(--uav-accent), var(--uav-primary));
+  box-shadow: 0 3px 8px rgba(var(--uav-primary-rgb), 0.4);
   transform: translateY(-1px);
 }
 
 .controls-toggle.active {
-  background-color: var(--sat-primary);
+  background-color: var(--uav-primary);
   color: white;
 }
 
-/* Keep the rest of the CSS */
+/* Map container */
 .satellite-map-container {
   position: relative;
   width: 100%;
   height: 600px;
-  /* padding-bottom: 50%; */
-  /* min-height: 700px; */
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
@@ -445,7 +448,7 @@
 }
 
 .refresh-button {
-  background: linear-gradient(to right, var(--sat-primary), rgba(var(--sat-primary-rgb), 0.7));
+  background: linear-gradient(to right, var(--uav-primary), rgba(var(--uav-primary-rgb), 0.7));
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
@@ -455,18 +458,18 @@
   gap: 6px;
   font-weight: 500;
   color: white;
-  box-shadow: 0 2px 6px rgba(var(--sat-primary-rgb), 0.3);
+  box-shadow: 0 2px 6px rgba(var(--uav-primary-rgb), 0.3);
   transition: all 0.2s ease;
 }
 
 .refresh-button:hover {
-  background: linear-gradient(to right, var(--sat-accent), rgba(var(--sat-primary-rgb), 0.8));
-  box-shadow: 0 3px 8px rgba(var(--sat-primary-rgb), 0.4);
+  background: linear-gradient(to right, var(--uav-accent), rgba(var(--uav-primary-rgb), 0.8));
+  box-shadow: 0 3px 8px rgba(var(--uav-primary-rgb), 0.4);
   transform: translateY(-1px);
 }
 
 .refresh-button:disabled {
-  background: linear-gradient(to right, rgba(var(--sat-primary-rgb), 0.5), rgba(var(--sat-accent-rgb), 0.3));
+  background: linear-gradient(to right, rgba(var(--uav-primary-rgb), 0.5), rgba(var(--uav-accent-rgb), 0.3));
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -497,37 +500,6 @@
   z-index: 20;
 }
 
-.yield-container {
-  display: flex;
-  align-items: stretch;
-  height: 150px;
-  margin: 10px 0;
-}
-
-.yield-vertical-gradient {
-  width: 30px;
-  height: 100%;
-  background: linear-gradient(to bottom, 
-    #ff0000 0%,    /* Red (high yield) */
-    #ff8000 20%,   /* Orange */
-    #ffff00 40%,   /* Yellow */
-    #00ff00 60%,   /* Green */
-    #00ffff 80%,   /* Light blue */
-    #0000ff 100%   /* Blue (low yield) */
-  );
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.yield-labels {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  margin-left: 10px;
-  padding: 5px 0;
-  font-size: 12px;
-}
-
 .error-container {
   position: absolute;
   top: 0;
@@ -553,6 +525,13 @@
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Custom tooltip styles for the hover information */
+.map-tooltip {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* Media queries for responsiveness */
@@ -627,35 +606,5 @@
     max-width: 100%;
     left: 0 !important;
     right: 0;
-  }
-  .yield-container {
-    display: flex;
-    align-items: stretch;
-    height: 150px;
-    margin: 10px 0;
-  }
-  
-  .yield-vertical-gradient {
-    width: 30px;
-    height: 100%;
-    background: linear-gradient(to bottom, 
-      #ff0000 0%,    /* Red (high yield) */
-      #ff8000 20%,   /* Orange */
-      #ffff00 40%,   /* Yellow */
-      #00ff00 60%,   /* Green */
-      #00ffff 80%,   /* Light blue */
-      #0000ff 100%   /* Blue (low yield) */
-    );
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  .yield-labels {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-left: 10px;
-    padding: 5px 0;
-    font-size: 12px;
   }
 }

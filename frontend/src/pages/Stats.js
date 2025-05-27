@@ -169,7 +169,7 @@ const Stats = ({
                   </div>
                 )}
               </div>
-              <div className="header-divider"></div>
+              {/* <div className="header-divider"></div> */}
             </div>
             
             <div className="col-md-7 p-3">
@@ -198,14 +198,14 @@ const Stats = ({
 
             <div className="col-md-12 px-5 pt-5">
               <h2 className="section-heading">Satellite View</h2>
-              <div className="header-divider"></div>
+              {/* <div className="header-divider"></div> */}
             </div>
             <div className="col-md-12 p-3">
               <SatelliteViewer selectedField={selectedField} token={token} />
             </div>
             <div className="col-md-12 px-5 pt-5">
               <h2 className="section-heading">Vegetation Health Trends</h2>
-              <div className="header-divider"></div>
+              {/* <div className="header-divider"></div> */}
             </div>
             <div className="col-md-12 p-3">
               <VegetationTrends selectedField={selectedField} token={token} />

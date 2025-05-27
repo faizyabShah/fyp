@@ -19,11 +19,7 @@
     border: 1px solid #e6e6e6; */
     transition: all 0.3s ease;
   }
-  
-  .field-selector-container:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
+
   
   .field-label {
     font-weight: 600;

@@ -17,9 +17,9 @@ from pyproj import Transformer
 
 # Configure Sentinel Hub credentials
 config = SHConfig()
-config.instance_id = '0a26c1fc-c12a-456f-b795-28ebeba0e142'
-config.sh_client_id = 'a3265009-a113-42de-b298-6722d4bbbb7c'
-config.sh_client_secret = 'IpUFFJJn3ihYofil3FcH4Fat7Wd6Ptau'
+config.instance_id = '26bb1db9-75f6-4424-8e0b-c72506d5ca00'
+config.sh_client_id = '857efe0a-219b-488b-93c3-45fde4d50557'
+config.sh_client_secret = 'wC5jFvMwMc39uDZ3fN14ktBTNWbHcDb3'
 
 configuration = Config()
 
@@ -51,6 +51,8 @@ def fetch_sentinel_imagery(polygon_coords, username, name, start_date_str, end_d
     bool or dict
         True if successful or an error dictionary
     """
+
+    end_date_str = "2024-05-06"
     # Compute bounding box from the polygon coordinates (assumes [lon, lat] points)
     print("FETCHING SENTINEL IMAGERY")
     lons = [pt[0] for pt in polygon_coords]
